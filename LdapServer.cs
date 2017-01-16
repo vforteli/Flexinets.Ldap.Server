@@ -65,26 +65,47 @@ namespace Flexinets.Ldap
                 _log.Debug("huurr");
                 var client = _server.EndAcceptTcpClient(ar);
                 _log.Debug("got a connection?");
+
                 // Immediately start listening for the next packet
                 _server.BeginAcceptTcpClient(ReceiveCallback, null);
 
                 var stream = client.GetStream();
                 var reader = new StreamReader(stream);
                 var writer = new StreamWriter(stream) { AutoFlush = true };
-
-                while (true)
+                try
                 {
-                    string inputLine = "";
-                    while (inputLine != null)
+                    byte[] bytes = new byte[1024];
+                    string data;
+                    int i;
+                    
+                    i = stream.Read(bytes, 0, bytes.Length);
+
+                    while (i != 0)
                     {
-                        _log.Debug(inputLine);
-                        inputLine = reader.ReadLine();
-                        writer.WriteLine("Echoing string: " + inputLine);
-                        Console.WriteLine("Echoing string: " + inputLine);
-                    }
-                    Console.WriteLine("Server saw disconnect from client.");
+                        data = Encoding.UTF8.GetString(bytes, 0, i);
+                        _log.Debug(Utils.ByteArrayToString(bytes));
+                        _log.Debug(String.Format("Received: {0}", data));
+
+                        if (data.Contains("cn=foo,ou=flexinets,ou=se"))
+                        {
+                            var bindresponse = Utils.StringToByteArray("300c02010161070a010004000400");
+                            stream.Write(bindresponse, 0, bindresponse.Length);
+                        }
+                        if (data.Contains("uid"))
+                        {
+                            var searchresponse = Utils.StringToByteArray("300c02010265070a012004000400");
+                            stream.Write(searchresponse, 0, searchresponse.Length);
+                        }
+
+                        i = stream.Read(bytes, 0, bytes.Length);
+                    }                                              
+                }
+                catch (IOException ioex)
+                {
+                    _log.Warn("oops", ioex);
                 }
             }
         }
     }
 }
+
