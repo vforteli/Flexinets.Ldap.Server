@@ -101,7 +101,7 @@ namespace Flexinets.Ldap
                     }
 
                     _log.Debug($"Connection closed to {client.Client.RemoteEndPoint}");
-                    client.Close();                    
+                    client.Close();
                 }
                 catch (IOException ioex)
                 {
@@ -241,34 +241,22 @@ namespace Flexinets.Ldap
                 i++;
 
                 int attributeLength = 0;
-                //_log.Debug($"Packet length byte {packetBytes[i]}");
                 var firstbit = packetBytes[i] >> 7;
                 if (firstbit == 1)    // Long notation
                 {
                     var lengthoflengthbytes = packetBytes[i] &= 127;
-                    if (lengthoflengthbytes == 1)
-                    {
-                        //_log.Debug("Using long notation 1 byte");
-                        attributeLength = packetBytes[i + 1];
-                        i += 2;
-                    }
-                    else if (lengthoflengthbytes == 2)
-                    {
-                        //_log.Debug("Using long notation 2 bytes");
-                        var floff = new Byte[2];
-                        Buffer.BlockCopy(packetBytes, i + 1, floff, 0, 2);
-                        attributeLength = BitConverter.ToUInt16(floff.Reverse().ToArray(), 0);
-                        i += 3;
-                    }
+                    var lengthBytes = new Byte[4];
+                    Buffer.BlockCopy(packetBytes, i + 1, lengthBytes, 0, lengthoflengthbytes);
+                    attributeLength = BitConverter.ToInt32(lengthBytes.Reverse().ToArray(), 0);
+                    i += lengthoflengthbytes;
                 }
                 else // Short notation
                 {
-                    //_log.Debug("Using short notation");
                     attributeLength = packetBytes[i] &= 127;
-                    i += 1;
                 }
+                i += 1;
 
-                
+
                 if (tag.TagType == TagType.Application)
                 {
                     _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, primitive {tag.IsPrimitive}, operation: {tag.LdapOperation}");
@@ -281,7 +269,7 @@ namespace Flexinets.Ldap
                 {
                     _log.Debug($"Attribute length: {attributeLength}, TagType: {tag.TagType}, primitive {tag.IsPrimitive}, datatype: {tag.DataType}");
                 }
-                
+
                 if (tag.IsPrimitive)
                 {
                     var data = Encoding.UTF8.GetString(packetBytes, i, attributeLength);
