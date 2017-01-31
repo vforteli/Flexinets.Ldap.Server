@@ -270,10 +270,28 @@ namespace Flexinets.Ldap
                     _log.Debug($"Attribute length: {attributeLength}, TagType: {tag.TagType}, primitive {tag.IsPrimitive}, datatype: {tag.DataType}");
                 }
 
-                if (tag.IsPrimitive)
+                if (tag.IsPrimitive && attributeLength > 0)
                 {
-                    var data = Encoding.UTF8.GetString(packetBytes, i, attributeLength);
-                    _log.Debug(data);
+                    if (tag.TagType == TagType.Universal)
+                    {
+                        if (tag.DataType == UniversalDataType.Boolean)
+                        {
+                            _log.Debug(BitConverter.ToBoolean(packetBytes, i));
+                        }
+                        else if (tag.DataType == UniversalDataType.Integer)
+                        {
+                            var intbytes = new Byte[4];
+                            Buffer.BlockCopy(packetBytes, i, intbytes, 4 - attributeLength, attributeLength);
+
+                            _log.Debug(BitConverter.ToUInt32(intbytes.Reverse().ToArray(), 0));
+                        }
+                        else
+                        {
+                            var data = Encoding.UTF8.GetString(packetBytes, i, attributeLength);
+                            _log.Debug(data);
+                        }
+                    }
+
                     i += attributeLength;
                 }
             }
