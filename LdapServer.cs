@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -67,35 +68,40 @@ namespace Flexinets.Ldap
                 _server.BeginAcceptTcpClient(ReceiveCallback, null);
 
                 _log.Debug($"Connection from {client.Client.RemoteEndPoint}");
-                
+
                 try
                 {
                     var stream = client.GetStream();
-                    var bytes = new Byte[1024];
-                    String data;
-                    var i = stream.Read(bytes, 0, bytes.Length);
-   
-                    while (i != 0)
+
+                    int i = 0;
+                    while (true)
                     {
-                        data = Encoding.UTF8.GetString(bytes, 0, i);
+                        var bytes = new Byte[1024];
+                        i = stream.Read(bytes, 0, bytes.Length);
+                        if (i == 0)
+                        {
+                            break;
+                        }
+
+                        var data = Encoding.UTF8.GetString(bytes, 0, i);
                         _log.Debug($"Received {i} bytes: {data}");
                         _log.Debug(Utils.ByteArrayToString(bytes));
-                        ParseLdapPacket(bytes);
+                        ParseLdapPacket(bytes, i);
 
-                        // 30 29 02 01 01 60 24 02 01 03 04 19 63 6e 3d 66 6f 6f 2c 6f 75 3d 66 6c 65 78 69 6e 65 74 73 2c 6f 75 3d 73 65 80 04 68 75 72 72 00 00
-                        if (data.Contains("cn=foo,ou=flexinets,ou=se"))
+                        if (data.Contains("cn=bindUser,cn=Users,dc=dev,dc=company,dc=com"))
                         {
                             var bindresponse = Utils.StringToByteArray("300c02010161070a010004000400"); // bind success...
                             stream.Write(bindresponse, 0, bindresponse.Length);
                         }
-                        if (data.Contains("uid"))
+                        if (data.Contains("sAMAccountName"))
                         {
                             var searchresponse = Utils.StringToByteArray("300c02010265070a012004000400");   // object not found
                             stream.Write(searchresponse, 0, searchresponse.Length);
                         }
-
-                        i = stream.Read(bytes, 0, bytes.Length);
                     }
+
+                    _log.Debug($"Connection closed to {client.Client.RemoteEndPoint}");
+                    client.Close();                    
                 }
                 catch (IOException ioex)
                 {
@@ -105,35 +111,184 @@ namespace Flexinets.Ldap
         }
 
 
-        private void ParseLdapPacket(Byte[] packetBytes)
+        public class Tag
         {
-            int i = 1;
-            _log.Debug($"Packet length byte {packetBytes[i]}");
-            var firstbit = packetBytes[i] >> 7;
-            if (firstbit == 1)    // Long notation
+            private Byte _tagByte;
+
+            public Tag(Byte tagByte)
             {
-                var lengthoflengthbytes = packetBytes[i] &= 127;
-                _log.Debug($"Length of length: {lengthoflengthbytes}");
-
-                // todo hurgh...
-                if (lengthoflengthbytes == 1)
-                {
-                    _log.Debug($"Packet length: { packetBytes[i + 1]}");
-                }
-                else if (lengthoflengthbytes == 2)
-                {
-                    var floff = new Byte[2];
-                    Buffer.BlockCopy(packetBytes, i + 1, floff, 0, 2);
-                    _log.Debug($"Packet length: { BitConverter.ToUInt16(floff.Reverse().ToArray(), 0)}"); // todo, flip byte order... meh
-                }
-
+                _tagByte = tagByte;
             }
-            else // Short notation
+
+            public Boolean IsPrimitive
             {
-                var lengthbytes = packetBytes[i] &= 127;
-                _log.Debug($"Short length notation: {lengthbytes}");
+                get { return !(new BitArray(new byte[] { _tagByte }).Get(5)); }    // todo endianess...
+            }
+
+            public TagType TagType
+            {
+                // todo fix...
+                get
+                {
+                    var foo = new BitArray(new byte[] { _tagByte }).Get(6);
+                    var bar = new BitArray(new byte[] { _tagByte }).Get(7);
+                    if (!foo && !bar)
+                    {
+                        return TagType.Universal;
+                    }
+                    if (bar && !foo)
+                    {
+                        return TagType.Context;
+                    }
+                    else
+                    {
+                        return TagType.Application;
+                    }
+                }
+            }
+
+
+            public UniversalDataType DataType
+            {
+                get
+                {
+                    var bits = new BitArray(new byte[] { _tagByte });
+                    //Trace.WriteLine(BitsToString(bits));
+                    bits.Set(5, false);
+                    bits.Set(6, false);
+                    bits.Set(7, false);
+                    //Trace.WriteLine(BitsToString(bits));
+                    byte[] bytes = new byte[1];
+                    bits.CopyTo(bytes, 0);
+                    //Trace.WriteLine(bytes[0]);
+                    return (UniversalDataType)bytes[0];
+                }
+            }
+
+
+            public LdapOperation LdapOperation
+            {
+                get
+                {
+                    var bits = new BitArray(new byte[] { _tagByte });
+                    //Trace.WriteLine(BitsToString(bits));
+                    bits.Set(5, false);
+                    bits.Set(6, false);
+                    bits.Set(7, false);
+                    //Trace.WriteLine(BitsToString(bits));
+                    byte[] bytes = new byte[1];
+                    bits.CopyTo(bytes, 0);
+                    //Trace.WriteLine(bytes[0]);
+                    return (LdapOperation)bytes[0];
+                }
+            }
+        }
+
+        public static String BitsToString(BitArray bits)
+        {
+            var derp = "";
+            foreach (var bit in bits)
+            {
+                derp += Convert.ToInt32(bit);
+            }
+            return derp;
+        }
+
+
+        public enum TagType
+        {
+            Universal = 0,
+            Application = 1,
+            Context = 2,
+        }
+
+
+        // todo check what this is actually supposed to be called?
+        // https://en.wikipedia.org/wiki/X.690#BER_encoding
+        public enum UniversalDataType
+        {
+            EndOfContent = 0,
+            Boolean = 1,
+            Integer = 2,
+            OctetString = 4,
+            Enumerated = 10,
+            Sequence = 16,
+        }
+
+
+        public enum LdapOperation
+        {
+            BindRequest = 0,
+            BindResponse = 1,
+            UnbindRequest = 2,
+            SearchRequest = 3,
+            // todo add rest...
+        }
+
+
+        /// <summary>
+        /// Parse a raw ldap packet and returns something more useful
+        /// </summary>
+        /// <param name="packetBytes">Buffer containing packet bytes</param>
+        /// <param name="length">Actual length of the packet</param>
+        public void ParseLdapPacket(Byte[] packetBytes, int length)
+        {
+            int i = 0;
+
+            while (i <= length)
+            {
+                var tag = new Tag(packetBytes[i]);
+                i++;
+
+                int attributeLength = 0;
+                //_log.Debug($"Packet length byte {packetBytes[i]}");
+                var firstbit = packetBytes[i] >> 7;
+                if (firstbit == 1)    // Long notation
+                {
+                    var lengthoflengthbytes = packetBytes[i] &= 127;
+                    if (lengthoflengthbytes == 1)
+                    {
+                        //_log.Debug("Using long notation 1 byte");
+                        attributeLength = packetBytes[i + 1];
+                        i += 2;
+                    }
+                    else if (lengthoflengthbytes == 2)
+                    {
+                        //_log.Debug("Using long notation 2 bytes");
+                        var floff = new Byte[2];
+                        Buffer.BlockCopy(packetBytes, i + 1, floff, 0, 2);
+                        attributeLength = BitConverter.ToUInt16(floff.Reverse().ToArray(), 0);
+                        i += 3;
+                    }
+                }
+                else // Short notation
+                {
+                    //_log.Debug("Using short notation");
+                    attributeLength = packetBytes[i] &= 127;
+                    i += 1;
+                }
+
+                
+                if (tag.TagType == TagType.Application)
+                {
+                    _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, primitive {tag.IsPrimitive}, operation: {tag.LdapOperation}");
+                }
+                else if (tag.TagType == TagType.Context)
+                {
+                    _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, primitive {tag.IsPrimitive}, context specific ??? profit");
+                }
+                else
+                {
+                    _log.Debug($"Attribute length: {attributeLength}, TagType: {tag.TagType}, primitive {tag.IsPrimitive}, datatype: {tag.DataType}");
+                }
+                
+                if (tag.IsPrimitive)
+                {
+                    var data = Encoding.UTF8.GetString(packetBytes, i, attributeLength);
+                    _log.Debug(data);
+                    i += attributeLength;
+                }
             }
         }
     }
 }
-
