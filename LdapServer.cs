@@ -152,16 +152,7 @@ namespace Flexinets.Ldap
             {
                 get
                 {
-                    var bits = new BitArray(new byte[] { _tagByte });
-                    //Trace.WriteLine(BitsToString(bits));
-                    bits.Set(5, false);
-                    bits.Set(6, false);
-                    bits.Set(7, false);
-                    //Trace.WriteLine(BitsToString(bits));
-                    byte[] bytes = new byte[1];
-                    bits.CopyTo(bytes, 0);
-                    //Trace.WriteLine(bytes[0]);
-                    return (UniversalDataType)bytes[0];
+                    return (UniversalDataType)GetTagType(_tagByte);
                 }
             }
 
@@ -170,20 +161,32 @@ namespace Flexinets.Ldap
             {
                 get
                 {
-                    var bits = new BitArray(new byte[] { _tagByte });
-                    //Trace.WriteLine(BitsToString(bits));
-                    bits.Set(5, false);
-                    bits.Set(6, false);
-                    bits.Set(7, false);
-                    //Trace.WriteLine(BitsToString(bits));
-                    byte[] bytes = new byte[1];
-                    bits.CopyTo(bytes, 0);
-                    //Trace.WriteLine(bytes[0]);
-                    return (LdapOperation)bytes[0];
+                    return (LdapOperation)GetTagType(_tagByte);
                 }
+            }
+
+
+            private Byte GetTagType(Byte tagByte)
+            {
+                var bits = new BitArray(new byte[] { _tagByte });
+                //Trace.WriteLine(BitsToString(bits));
+                bits.Set(5, false);
+                bits.Set(6, false);
+                bits.Set(7, false);
+                //Trace.WriteLine(BitsToString(bits));
+                byte[] bytes = new byte[1];
+                bits.CopyTo(bytes, 0);
+                //Trace.WriteLine(bytes[0]);
+                return  bytes[0];
             }
         }
 
+
+        /// <summary>
+        /// Used for debugging...
+        /// </summary>
+        /// <param name="bits"></param>
+        /// <returns></returns>
         public static String BitsToString(BitArray bits)
         {
             var derp = "";
@@ -203,8 +206,7 @@ namespace Flexinets.Ldap
         }
 
 
-        // todo check what this is actually supposed to be called?
-        // https://en.wikipedia.org/wiki/X.690#BER_encoding
+        // Universal data types from https://en.wikipedia.org/wiki/X.690#BER_encoding
         public enum UniversalDataType
         {
             EndOfContent = 0,
@@ -213,21 +215,23 @@ namespace Flexinets.Ldap
             OctetString = 4,
             Enumerated = 10,
             Sequence = 16,
+            // todo add rest if needed...
         }
 
 
+        // Ldap operations from https://tools.ietf.org/html/rfc4511#section-4.2
         public enum LdapOperation
         {
             BindRequest = 0,
             BindResponse = 1,
             UnbindRequest = 2,
             SearchRequest = 3,
-            // todo add rest...
+            // todo add rest if needed...
         }
 
 
         /// <summary>
-        /// Parse a raw ldap packet and returns something more useful
+        /// Parse a raw ldap packet and return something more useful
         /// </summary>
         /// <param name="packetBytes">Buffer containing packet bytes</param>
         /// <param name="length">Actual length of the packet</param>
@@ -241,10 +245,9 @@ namespace Flexinets.Ldap
                 i++;
 
                 int attributeLength = 0;
-                var firstbit = packetBytes[i] >> 7;
-                if (firstbit == 1)    // Long notation
+                if (packetBytes[i] >> 7 == 1)    // Long notation
                 {
-                    var lengthoflengthbytes = packetBytes[i] &= 127;
+                    var lengthoflengthbytes = packetBytes[i] & 127;
                     var lengthBytes = new Byte[4];
                     Buffer.BlockCopy(packetBytes, i + 1, lengthBytes, 0, lengthoflengthbytes);
                     attributeLength = BitConverter.ToInt32(lengthBytes.Reverse().ToArray(), 0);
@@ -252,9 +255,9 @@ namespace Flexinets.Ldap
                 }
                 else // Short notation
                 {
-                    attributeLength = packetBytes[i] &= 127;
+                    attributeLength = packetBytes[i] & 127;
                 }
-                i += 1;
+                i++;
 
 
                 if (tag.TagType == TagType.Application)
@@ -290,6 +293,11 @@ namespace Flexinets.Ldap
                             var data = Encoding.UTF8.GetString(packetBytes, i, attributeLength);
                             _log.Debug(data);
                         }
+                    }
+                    else
+                    {
+                        var data = Encoding.UTF8.GetString(packetBytes, i, attributeLength);
+                        _log.Debug(data);
                     }
 
                     i += attributeLength;
