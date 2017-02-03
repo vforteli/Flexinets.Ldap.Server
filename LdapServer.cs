@@ -82,7 +82,7 @@ namespace Flexinets.Ldap
                         var data = Encoding.UTF8.GetString(bytes, 0, i);
                         _log.Debug($"Received {i} bytes: {data}");
                         _log.Debug(Utils.ByteArrayToString(bytes));
-                        ParseLdapPacket(bytes, i);
+                        ParseLdapPacket(bytes);
 
                         if (data.Contains("cn=bindUser,cn=Users,dc=dev,dc=company,dc=com"))
                         {
@@ -112,11 +112,12 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="packetBytes">Buffer containing packet bytes</param>
         /// <param name="length">Actual length of the packet</param>
-        public void ParseLdapPacket(Byte[] packetBytes, int length)
+        public void ParseLdapPacket(Byte[] packetBytes)
         {
+            int packetLength = 0;
             int i = 0;
 
-            while (i <= length)
+            while (i <= packetLength)
             {
                 var tag = new Tag(packetBytes[i]);
                 i++;
@@ -135,6 +136,12 @@ namespace Flexinets.Ldap
                     attributeLength = packetBytes[i] & 127;
                 }
                 i++;
+
+                // The first length is the length of the packet, set and forget
+                if (packetLength == 0)
+                {
+                    packetLength = attributeLength + 2;
+                }
 
 
                 if (tag.TagType == TagType.Application)
