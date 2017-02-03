@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Flexinets.Ldap
 {
@@ -27,6 +25,22 @@ namespace Flexinets.Ldap
                 hex.AppendFormat("{0:x2}", b);
             }
             return hex.ToString();
+        }
+
+
+        /// <summary>
+        /// Used for debugging...
+        /// </summary>
+        /// <param name="bits"></param>
+        /// <returns></returns>
+        public static String BitsToString(BitArray bits)
+        {
+            var derp = "";
+            foreach (var bit in bits)
+            {
+                derp += Convert.ToInt32(bit);
+            }
+            return derp;
         }
     }
 }

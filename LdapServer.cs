@@ -1,14 +1,10 @@
 ﻿using log4net;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Flexinets.Ldap
 {
@@ -111,125 +107,6 @@ namespace Flexinets.Ldap
         }
 
 
-        public class Tag
-        {
-            private Byte _tagByte;
-
-            public Tag(Byte tagByte)
-            {
-                _tagByte = tagByte;
-            }
-
-            public Boolean IsPrimitive
-            {
-                get { return !(new BitArray(new byte[] { _tagByte }).Get(5)); }    // todo endianess...
-            }
-
-            public TagType TagType
-            {
-                // todo fix...
-                get
-                {
-                    var foo = new BitArray(new byte[] { _tagByte }).Get(6);
-                    var bar = new BitArray(new byte[] { _tagByte }).Get(7);
-                    if (!foo && !bar)
-                    {
-                        return TagType.Universal;
-                    }
-                    if (bar && !foo)
-                    {
-                        return TagType.Context;
-                    }
-                    else
-                    {
-                        return TagType.Application;
-                    }
-                }
-            }
-
-
-            public UniversalDataType DataType
-            {
-                get
-                {
-                    return (UniversalDataType)GetTagType(_tagByte);
-                }
-            }
-
-
-            public LdapOperation LdapOperation
-            {
-                get
-                {
-                    return (LdapOperation)GetTagType(_tagByte);
-                }
-            }
-
-
-            private Byte GetTagType(Byte tagByte)
-            {
-                var bits = new BitArray(new byte[] { _tagByte });
-                //Trace.WriteLine(BitsToString(bits));
-                bits.Set(5, false);
-                bits.Set(6, false);
-                bits.Set(7, false);
-                //Trace.WriteLine(BitsToString(bits));
-                byte[] bytes = new byte[1];
-                bits.CopyTo(bytes, 0);
-                //Trace.WriteLine(bytes[0]);
-                return  bytes[0];
-            }
-        }
-
-
-        /// <summary>
-        /// Used for debugging...
-        /// </summary>
-        /// <param name="bits"></param>
-        /// <returns></returns>
-        public static String BitsToString(BitArray bits)
-        {
-            var derp = "";
-            foreach (var bit in bits)
-            {
-                derp += Convert.ToInt32(bit);
-            }
-            return derp;
-        }
-
-
-        public enum TagType
-        {
-            Universal = 0,
-            Application = 1,
-            Context = 2,
-        }
-
-
-        // Universal data types from https://en.wikipedia.org/wiki/X.690#BER_encoding
-        public enum UniversalDataType
-        {
-            EndOfContent = 0,
-            Boolean = 1,
-            Integer = 2,
-            OctetString = 4,
-            Enumerated = 10,
-            Sequence = 16,
-            // todo add rest if needed...
-        }
-
-
-        // Ldap operations from https://tools.ietf.org/html/rfc4511#section-4.2
-        public enum LdapOperation
-        {
-            BindRequest = 0,
-            BindResponse = 1,
-            UnbindRequest = 2,
-            SearchRequest = 3,
-            // todo add rest if needed...
-        }
-
-
         /// <summary>
         /// Parse a raw ldap packet and return something more useful
         /// </summary>
@@ -285,7 +162,6 @@ namespace Flexinets.Ldap
                         {
                             var intbytes = new Byte[4];
                             Buffer.BlockCopy(packetBytes, i, intbytes, 4 - attributeLength, attributeLength);
-
                             _log.Debug(BitConverter.ToUInt32(intbytes.Reverse().ToArray(), 0));
                         }
                         else
