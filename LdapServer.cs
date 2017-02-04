@@ -24,7 +24,6 @@ namespace Flexinets.Ldap
         /// Create a new server on endpoint
         /// </summary>
         /// <param name="serverEndpoint"></param>
-        /// <param name="dictionary"></param>
         public LdapServer(IPEndPoint serverEndpoint)
         {
             _server = new TcpListener(serverEndpoint);
@@ -92,7 +91,14 @@ namespace Flexinets.Ldap
                         if (data.Contains("sAMAccountName"))
                         {
                             var searchresponse = Utils.StringToByteArray("300c02010265070a012004000400");   // object not found
+                            _log.Debug(Utils.BitsToString(new System.Collections.BitArray(searchresponse)));
                             stream.Write(searchresponse, 0, searchresponse.Length);
+
+
+
+                            //var attribute = new LdapAttribute();
+                            //attribute.Tag = new Tag(null);
+                            //attribute.Tag.DataType = UniversalDataType.OctetString
                         }
                     }
 
@@ -107,11 +113,26 @@ namespace Flexinets.Ldap
         }
 
 
+
+        public class LdapAttribute
+        {
+            public Tag Tag;
+            public Byte[] Value;
+
+
+            public LdapAttribute()
+            {
+
+            }
+        }
+
+
+
+
         /// <summary>
         /// Parse a raw ldap packet and return something more useful
         /// </summary>
         /// <param name="packetBytes">Buffer containing packet bytes</param>
-        /// <param name="length">Actual length of the packet</param>
         public void ParseLdapPacket(Byte[] packetBytes)
         {
             int packetLength = 0;
@@ -119,7 +140,7 @@ namespace Flexinets.Ldap
 
             while (i <= packetLength)
             {
-                var tag = new Tag(packetBytes[i]);
+                var tag = Tag.Parse(packetBytes[i]);
                 i++;
 
                 int attributeLength = 0;

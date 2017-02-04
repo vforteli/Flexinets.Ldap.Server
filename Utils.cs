@@ -35,12 +35,18 @@ namespace Flexinets.Ldap
         /// <returns></returns>
         public static String BitsToString(BitArray bits)
         {
+            int i = 1;
             var derp = "";
             foreach (var bit in bits)
             {
                 derp += Convert.ToInt32(bit);
+                if (i % 8 == 0)
+                {
+                    derp += " ";
+                }
+                i++;
             }
-            return derp;
+            return derp.Trim();
         }
     }
 }

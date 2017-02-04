@@ -7,6 +7,9 @@
         BindResponse = 1,
         UnbindRequest = 2,
         SearchRequest = 3,
+        SearchResultEntry = 4,
+        SearchResultDone = 5,
+        SearchResultReference = 6
         // todo add rest if needed...
     }
 }
