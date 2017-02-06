@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Text;
+using System.Linq;
+
 
 namespace Flexinets.Ldap
 {
@@ -29,7 +31,7 @@ namespace Flexinets.Ldap
 
 
         /// <summary>
-        /// Used for debugging...
+        /// Used for debugging and testing...
         /// </summary>
         /// <param name="bits"></param>
         /// <returns></returns>
@@ -86,6 +88,34 @@ namespace Flexinets.Ldap
                 Buffer.BlockCopy(intbytes, 0, berBytes, 1, intbyteslength);
                 return berBytes;
             }
+        }
+
+
+        /// <summary>
+        /// Gets the integer length from a BER encoded byte array at the current position
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="currentPosition"></param>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public static Int32 BerLengthToInt(Byte[] bytes, Int32 currentPosition, out Int32 position)
+        {
+            position = 1;   // The minimum length of a ber encoded length is 1 byte
+            int attributeLength = 0;
+            if (bytes[currentPosition] >> 7 == 1)    // Long notation
+            {
+                var lengthoflengthbytes = bytes[currentPosition] & 127;
+                var lengthBytes = new Byte[4];
+                Buffer.BlockCopy(bytes, currentPosition + 1, lengthBytes, 0, lengthoflengthbytes);
+                attributeLength = BitConverter.ToInt32(lengthBytes.Reverse().ToArray(), 0);
+                position += lengthoflengthbytes;
+            }
+            else // Short notation
+            {
+                attributeLength = bytes[currentPosition] & 127;
+            }
+
+            return attributeLength;
         }
     }
 }

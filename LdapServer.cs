@@ -143,21 +143,10 @@ namespace Flexinets.Ldap
                 var tag = Tag.Parse(packetBytes[i]);
                 i++;
 
-                int attributeLength = 0;
-                if (packetBytes[i] >> 7 == 1)    // Long notation
-                {
-                    var lengthoflengthbytes = packetBytes[i] & 127;
-                    var lengthBytes = new Byte[4];
-                    Buffer.BlockCopy(packetBytes, i + 1, lengthBytes, 0, lengthoflengthbytes);
-                    attributeLength = BitConverter.ToInt32(lengthBytes.Reverse().ToArray(), 0);
-                    i += lengthoflengthbytes;
-                }
-                else // Short notation
-                {
-                    attributeLength = packetBytes[i] & 127;
-                }
-                i++;
-
+                int position;
+                var attributeLength = Utils.BerLengthToInt(packetBytes, i, out position);
+                i += position;
+            
                 // The first length is the length of the packet, set and forget
                 if (packetLength == 0)
                 {
