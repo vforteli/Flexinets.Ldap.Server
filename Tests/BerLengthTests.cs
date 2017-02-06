@@ -52,5 +52,27 @@ namespace Flexinets.Ldap.Tests
             var berlength = Utils.IntToBerLength(255);
             Assert.AreEqual("10000001 11111111", Utils.BitsToString(new BitArray(berlength)));
         }
+
+
+        [TestMethod]
+        public void TestBerLengthLongNotation5()
+        {
+            var bytes = Utils.StringToByteArray("300c02010161070a010004000400");
+            var position = 1;
+            var intLength = Utils.BerLengthToInt(bytes, 1, out position);
+
+            Assert.AreEqual(12, intLength);
+        }
+
+
+        [TestMethod]
+        public void TestBerLengthLongNotation6()
+        {
+            var bytes = Utils.StringToByteArray("300c02010161070a010004000400");
+            var position = 1;
+            var intLength = Utils.BerLengthToInt(bytes, 3, out position);
+
+            Assert.AreEqual(1, intLength);
+        }
     }
 }
