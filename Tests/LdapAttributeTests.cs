@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections;
+using System.Text;
 
 namespace Flexinets.Ldap.Tests
 {
@@ -56,6 +57,19 @@ namespace Flexinets.Ldap.Tests
             };
 
             Assert.AreEqual("010100", Utils.ByteArrayToString(attribute.GetBytes()));
+        }
+
+
+        [TestMethod]
+        public void TestLdapAttributeGetBytesString()
+        {
+            var attribute = new LdapAttribute
+            {
+                Tag = new Tag(TagType.Universal, true, UniversalDataType.OctetString),
+                Value = Encoding.UTF8.GetBytes("dc=karakorum,dc=net")
+            };
+
+            Assert.AreEqual("041364633d6b6172616b6f72756d2c64633d6e6574", Utils.ByteArrayToString(attribute.GetBytes()));
         }
     }
 }
