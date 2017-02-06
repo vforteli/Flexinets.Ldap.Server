@@ -50,6 +50,7 @@
     <Compile Include="LdapTagType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tag.cs" />
+    <Compile Include="Tests\BerLengthTests.cs" />
     <Compile Include="Tests\LdapTagTests.cs" />
     <Compile Include="UniversalDataType.cs" />
     <Compile Include="Utils.cs" />
