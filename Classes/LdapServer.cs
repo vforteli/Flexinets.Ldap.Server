@@ -113,22 +113,6 @@ namespace Flexinets.Ldap
         }
 
 
-
-        public class LdapAttribute
-        {
-            public Tag Tag;
-            public Byte[] Value;
-
-
-            public LdapAttribute()
-            {
-
-            }
-        }
-
-
-
-
         /// <summary>
         /// Parse a raw ldap packet and return something more useful
         /// </summary>
