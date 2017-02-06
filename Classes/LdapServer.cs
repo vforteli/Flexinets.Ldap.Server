@@ -147,7 +147,7 @@ namespace Flexinets.Ldap
                 var attributeLength = Utils.BerLengthToInt(packetBytes, i, out position);
                 i += position;
             
-                // The first length is the length of the packet, set and forget
+                // The first length is the length of the packet, set and forget. The rest are attributes
                 if (packetLength == 0)
                 {
                     packetLength = attributeLength + 2;
