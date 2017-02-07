@@ -93,12 +93,6 @@ namespace Flexinets.Ldap
                             var searchresponse = Utils.StringToByteArray("300c02010265070a012004000400");   // object not found
                             _log.Debug(Utils.BitsToString(new System.Collections.BitArray(searchresponse)));
                             stream.Write(searchresponse, 0, searchresponse.Length);
-
-
-
-                            //var attribute = new LdapAttribute();
-                            //attribute.Tag = new Tag(null);
-                            //attribute.Tag.DataType = UniversalDataType.OctetString
                         }
                     }
 
