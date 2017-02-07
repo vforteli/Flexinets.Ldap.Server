@@ -11,29 +11,18 @@ namespace Flexinets.Ldap
 
         public Boolean IsSequence
         {
-            get { return new BitArray(new byte[] { _tagByte }).Get(5); }    // todo endianess... 
+            get
+            {
+                return new BitArray(new byte[] { _tagByte }).Get(5);
+            }
         }
 
 
         public TagType TagType
         {
-            // todo fix...
             get
             {
-                var foo = new BitArray(new byte[] { _tagByte }).Get(6);
-                var bar = new BitArray(new byte[] { _tagByte }).Get(7);
-                if (!foo && !bar)
-                {
-                    return TagType.Universal;
-                }
-                if (bar && !foo)
-                {
-                    return TagType.Context;
-                }
-                else
-                {
-                    return TagType.Application;
-                }
+                return (TagType)(_tagByte >> 6);
             }
         }
 
@@ -42,7 +31,7 @@ namespace Flexinets.Ldap
         {
             get
             {
-                return (UniversalDataType)GetTagType(_tagByte);
+                return (UniversalDataType)(_tagByte & 31);
             }
         }
 
@@ -51,7 +40,7 @@ namespace Flexinets.Ldap
         {
             get
             {
-                return (LdapOperation)GetTagType(_tagByte);
+                return (LdapOperation)(_tagByte & 31);
             }
         }
 
@@ -113,18 +102,6 @@ namespace Flexinets.Ldap
         private Tag(Byte tagByte)
         {
             _tagByte = tagByte;
-        }
-
-
-        private Byte GetTagType(Byte tagByte)
-        {
-            var bits = new BitArray(new byte[] { _tagByte });
-            bits.Set(5, false);
-            bits.Set(6, false);
-            bits.Set(7, false);
-            byte[] bytes = new byte[1];
-            bits.CopyTo(bytes, 0);
-            return bytes[0];
         }
     }
 }
