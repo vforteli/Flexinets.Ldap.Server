@@ -9,7 +9,7 @@ namespace Flexinets.Ldap
     public class LdapAttribute
     {
         public Tag Tag;
-        public Byte[] Value;
+        public Byte[] Value = new byte[0];
         public List<LdapAttribute> ChildAttributes = new List<LdapAttribute>();
 
 

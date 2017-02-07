@@ -100,7 +100,7 @@ namespace Flexinets.Ldap.Tests
             });
             bindrequest.ChildAttributes.Add(new LdapAttribute
             {
-                Tag = new Tag(false, (byte)0),
+                Tag = new Tag((byte)0, false),
                 Value = Encoding.UTF8.GetBytes("bindUserPassword")
             });
 
@@ -108,6 +108,51 @@ namespace Flexinets.Ldap.Tests
 
 
             var expected = "30490201016044020103042d636e3d62696e64557365722c636e3d55736572732c64633d6465762c64633d636f6d70616e792c64633d636f6d801062696e645573657250617373776f7264";
+            Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
+        }
+
+
+        [TestMethod]
+        public void TestLdapAttributeSequenceGetBytes2()
+        {
+            // Packet
+            var packet = new LdapAttribute
+            {
+                Tag = new Tag(UniversalDataType.Sequence, true)
+            };
+
+            // Message id
+            packet.ChildAttributes.Add(new LdapAttribute
+            {
+                Tag = new Tag(UniversalDataType.Integer, false),
+                Value = new Byte[] { 1 }
+            });
+
+            // Bind request
+            var bindresponse = new LdapAttribute { Tag = new Tag(LdapOperation.BindResponse, true) };
+
+            var resultCode = new LdapAttribute
+            {
+                Tag = new Tag(UniversalDataType.Enumerated, false),
+                Value = new Byte[] { 0 }
+            };
+            bindresponse.ChildAttributes.Add(resultCode);
+
+            var matchedDn = new LdapAttribute
+            {
+                Tag = new Tag(UniversalDataType.OctetString, false)
+            };
+            var diagnosticMessage = new LdapAttribute
+            {
+                Tag = new Tag(UniversalDataType.OctetString, false)
+            };
+
+            bindresponse.ChildAttributes.Add(matchedDn);
+            bindresponse.ChildAttributes.Add(diagnosticMessage);
+
+            packet.ChildAttributes.Add(bindresponse);
+
+            var expected = "300c02010161070a010004000400";
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
     }
