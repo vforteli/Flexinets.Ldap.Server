@@ -10,6 +10,7 @@ namespace Flexinets.Ldap
     {
         public Tag Tag;
         public Byte[] Value;
+        public List<LdapAttribute> ChildAttributes = new List<LdapAttribute>();
 
 
         public LdapAttribute()
@@ -22,7 +23,18 @@ namespace Flexinets.Ldap
         {
             if (Tag.IsSequence)
             {
-                throw new NotImplementedException(); // todo add complex types
+                var list = new List<Byte>();
+                foreach (var attribute in ChildAttributes)
+                {
+                    list.AddRange(attribute.GetBytes().ToList());
+                }
+
+                var lengthbytes = Utils.IntToBerLength(list.Count);
+                var attributeBytes = new byte[1 + lengthbytes.Length + list.Count];
+                attributeBytes[0] = Tag.GetTagByte();
+                Buffer.BlockCopy(lengthbytes, 0, attributeBytes, 1, lengthbytes.Length);
+                Buffer.BlockCopy(list.ToArray(), 0, attributeBytes, 1 + lengthbytes.Length, list.Count);
+                return attributeBytes;
             }
             else
             {

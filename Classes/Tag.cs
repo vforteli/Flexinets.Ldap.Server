@@ -69,7 +69,7 @@ namespace Flexinets.Ldap
 
         public Boolean IsSequence
         {
-            get { return new BitArray(new byte[] { _tagByte }).Get(5); }    // todo endianess...
+            get { return _isSequence; }    // todo endianess...
         }
 
         public TagType TagType
