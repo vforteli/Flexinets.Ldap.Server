@@ -72,7 +72,7 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="isSequence"></param>
         /// <param name="operation"></param>
-        public Tag(Boolean isSequence, Byte context)
+        public Tag(Byte context, Boolean isSequence)
         {
             _tagByte = (byte)((byte)context + (Convert.ToByte(isSequence) << 5) + ((byte)TagType.Context << 6));
         }
