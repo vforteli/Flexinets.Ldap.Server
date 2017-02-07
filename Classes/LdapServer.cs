@@ -83,12 +83,6 @@ namespace Flexinets.Ldap
                         _log.Debug(Utils.ByteArrayToString(bytes));
                         ParseLdapPacket(bytes);
 
-
-                        var packet = new LdapAttribute
-                        {
-                            Tag = new Tag(TagType.Universal, true, UniversalDataType.Sequence)
-                        };
-                        Utils.ByteArrayToString(packet.GetBytes());
                         if (data.Contains("cn=bindUser,cn=Users,dc=dev,dc=company,dc=com"))
                         {
                             var bindresponse = Utils.StringToByteArray("300c02010161070a010004000400"); // bind success...
