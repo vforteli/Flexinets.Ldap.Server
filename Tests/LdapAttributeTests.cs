@@ -13,7 +13,7 @@ namespace Flexinets.Ldap.Tests
         {
             var attribute = new LdapAttribute
             {
-                Tag = new Tag(TagType.Universal, true, UniversalDataType.Integer),
+                Tag = new Tag(TagType.Universal, false, UniversalDataType.Integer),
                 Value = new byte[] { 1 }
             };
 
@@ -26,7 +26,7 @@ namespace Flexinets.Ldap.Tests
         {
             var attribute = new LdapAttribute
             {
-                Tag = new Tag(TagType.Universal, true, UniversalDataType.Integer),
+                Tag = new Tag(TagType.Universal, false, UniversalDataType.Integer),
                 Value = new byte[] { 2 }
             };
 
@@ -39,7 +39,7 @@ namespace Flexinets.Ldap.Tests
         {
             var attribute = new LdapAttribute
             {
-                Tag = new Tag(TagType.Universal, true, UniversalDataType.Boolean),
+                Tag = new Tag(TagType.Universal, false, UniversalDataType.Boolean),
                 Value = new byte[] { 1 }
             };
 
@@ -52,7 +52,7 @@ namespace Flexinets.Ldap.Tests
         {
             var attribute = new LdapAttribute
             {
-                Tag = new Tag(TagType.Universal, true, UniversalDataType.Boolean),
+                Tag = new Tag(TagType.Universal, false, UniversalDataType.Boolean),
                 Value = new byte[] { 0 }
             };
 
@@ -65,7 +65,7 @@ namespace Flexinets.Ldap.Tests
         {
             var attribute = new LdapAttribute
             {
-                Tag = new Tag(TagType.Universal, true, UniversalDataType.OctetString),
+                Tag = new Tag(TagType.Universal, false, UniversalDataType.OctetString),
                 Value = Encoding.UTF8.GetBytes("dc=karakorum,dc=net")
             };
 

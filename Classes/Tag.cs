@@ -8,7 +8,7 @@ namespace Flexinets.Ldap
     {
         private Byte _tagByte;
         private TagType _tagType;
-        private Boolean _isPrimitive;
+        private Boolean _isSequence;
         private Byte _data;
 
 
@@ -16,12 +16,12 @@ namespace Flexinets.Ldap
         /// Create a tag with an ldap operation
         /// </summary>
         /// <param name="type"></param>
-        /// <param name="isPrimitive"></param>
+        /// <param name="isSequence"></param>
         /// <param name="operation"></param>
-        public Tag(TagType type, Boolean isPrimitive, LdapOperation operation)
+        public Tag(TagType type, Boolean isSequence, LdapOperation operation)
         {
             _tagType = type;
-            _isPrimitive = isPrimitive;
+            _isSequence = isSequence;
             _data = (byte)operation;
         }
 
@@ -30,12 +30,12 @@ namespace Flexinets.Ldap
         /// Create a tag with universal data type
         /// </summary>
         /// <param name="type"></param>
-        /// <param name="isPrimitive"></param>
+        /// <param name="isSequence"></param>
         /// <param name="dataType"></param>
-        public Tag(TagType type, Boolean isPrimitive, UniversalDataType dataType)
+        public Tag(TagType type, Boolean isSequence, UniversalDataType dataType)
         {
             _tagType = type;
-            _isPrimitive = isPrimitive;
+            _isSequence = isSequence;
             _data = (byte)dataType;
         }
 
@@ -46,7 +46,7 @@ namespace Flexinets.Ldap
         /// <returns></returns>
         public Byte GetTagByte()
         {
-            var foo = _data + (Convert.ToByte(!_isPrimitive) << 5) + ((byte)_tagType << 6);            
+            var foo = _data + (Convert.ToByte(_isSequence) << 5) + ((byte)_tagType << 6);            
             return (byte)foo;
         }
 
@@ -67,9 +67,9 @@ namespace Flexinets.Ldap
             return new Tag(tagByte);
         }
 
-        public Boolean IsPrimitive
+        public Boolean IsSequence
         {
-            get { return !(new BitArray(new byte[] { _tagByte }).Get(5)); }    // todo endianess...
+            get { return new BitArray(new byte[] { _tagByte }).Get(5); }    // todo endianess...
         }
 
         public TagType TagType

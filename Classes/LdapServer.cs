@@ -140,18 +140,18 @@ namespace Flexinets.Ldap
 
                 if (tag.TagType == TagType.Application)
                 {
-                    _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, primitive {tag.IsPrimitive}, operation: {tag.LdapOperation}");
+                    _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, sequence {tag.IsSequence}, operation: {tag.LdapOperation}");
                 }
                 else if (tag.TagType == TagType.Context)
                 {
-                    _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, primitive {tag.IsPrimitive}, context specific ??? profit");
+                    _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, sequence {tag.IsSequence}, context specific ??? profit");
                 }
                 else
                 {
-                    _log.Debug($"Attribute length: {attributeLength}, TagType: {tag.TagType}, primitive {tag.IsPrimitive}, datatype: {tag.DataType}");
+                    _log.Debug($"Attribute length: {attributeLength}, TagType: {tag.TagType}, sequence {tag.IsSequence}, datatype: {tag.DataType}");
                 }
 
-                if (tag.IsPrimitive && attributeLength > 0)
+                if (tag.IsSequence && attributeLength > 0)
                 {
                     if (tag.TagType == TagType.Universal)
                     {

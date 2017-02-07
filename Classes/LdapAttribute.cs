@@ -20,7 +20,11 @@ namespace Flexinets.Ldap
 
         public Byte[] GetBytes()
         {
-            if (Tag.IsPrimitive)
+            if (Tag.IsSequence)
+            {
+                throw new NotImplementedException(); // todo add complex types
+            }
+            else
             {
                 var lengthbytes = Utils.IntToBerLength(Value.Length);
                 var attributeBytes = new byte[1 + lengthbytes.Length + Value.Length];
@@ -28,10 +32,6 @@ namespace Flexinets.Ldap
                 Buffer.BlockCopy(lengthbytes, 0, attributeBytes, 1, lengthbytes.Length);
                 Buffer.BlockCopy(Value, 0, attributeBytes, 1 + lengthbytes.Length, Value.Length);
                 return attributeBytes;
-            }
-            else
-            {
-                throw new NotImplementedException(); // todo add complex types
             }
         }
     }
