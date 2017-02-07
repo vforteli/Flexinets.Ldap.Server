@@ -134,7 +134,7 @@ namespace Flexinets.Ldap.Tests
             var resultCode = new LdapAttribute
             {
                 Tag = new Tag(UniversalDataType.Enumerated, false),
-                Value = new Byte[] { 0 }
+                Value = new Byte[] { (Byte)LdapResult.success }
             };
             bindresponse.ChildAttributes.Add(resultCode);
 
