@@ -45,6 +45,15 @@ namespace Flexinets.Ldap
         }
 
 
+        public Byte ContextType
+        {
+            get
+            {
+                return (byte)(_tagByte & 31);
+            }
+        }
+
+
         /// <summary>
         /// Create an application tag
         /// </summary>

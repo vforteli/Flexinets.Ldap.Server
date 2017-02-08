@@ -82,7 +82,6 @@ namespace Flexinets.Ldap
                         var data = Encoding.UTF8.GetString(bytes, 0, i);
                         _log.Debug($"Received {i} bytes: {data}");
                         _log.Debug(Utils.ByteArrayToString(bytes));
-                        ParseLdapPacket(bytes);
 
                         var ldapPacket = LdapAttribute.ParsePacket(bytes);
                         PrintValue(ldapPacket);
@@ -115,103 +114,29 @@ namespace Flexinets.Ldap
 
         private void PrintValue(LdapAttribute attribute)
         {
-            if (attribute.Tag.IsSequence)
+            if (attribute.Tag.TagType == TagType.Universal)
             {
-                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} sequence tag");
+                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, DataType: {attribute.Tag.DataType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+            }
+            else if (attribute.Tag.TagType == TagType.Application)
+            {
+                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, LdapOperation: {attribute.Tag.LdapOperation} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+            }
+            else if (attribute.Tag.TagType == TagType.Context)
+            {
+                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, Context: {attribute.Tag.ContextType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+            }
+
+            if (attribute.Tag.IsSequence)
+            {                
                 foreach (var attr in attribute.ChildAttributes)
                 {
                     depth++;
                     PrintValue(attr);
                     depth--;
                 }                
-            }
-            else
-            {
-                if (attribute.Tag.TagType == TagType.Universal)
-                {                    
-                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, DataType: {attribute.Tag.DataType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
-                }
-                else if (attribute.Tag.TagType == TagType.Application)
-                {
-                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, LdapOperation: {attribute.Tag.LdapOperation} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
-                }
-                else if (attribute.Tag.TagType == TagType.Context)
-                {
-                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, Context: {attribute.Tag} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
-                }
-                
-            }
+            }            
         }
-        private Int32 depth = 1;
-
-
-        /// <summary>
-        /// Parse a raw ldap packet and return something more useful
-        /// </summary>
-        /// <param name="packetBytes">Buffer containing packet bytes</param>
-        public void ParseLdapPacket(Byte[] packetBytes)
-        {
-            int packetLength = 0;
-            int i = 0;
-
-            while (i <= packetLength)
-            {
-                var tag = Tag.Parse(packetBytes[i]);
-                i++;
-
-                int position;
-                var attributeLength = Utils.BerLengthToInt(packetBytes, i, out position);
-                i += position;
-            
-                // The first length is the length of the packet, set and forget. The rest are attributes
-                if (packetLength == 0)
-                {
-                    packetLength = attributeLength + 2;
-                }
-
-
-                if (tag.TagType == TagType.Application)
-                {
-                    _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, sequence {tag.IsSequence}, operation: {tag.LdapOperation}");
-                }
-                else if (tag.TagType == TagType.Context)
-                {
-                    _log.Debug($"Attribute length: {attributeLength}, Tagtype: {tag.TagType}, sequence {tag.IsSequence}, context specific ??? profit");
-                }
-                else
-                {
-                    _log.Debug($"Attribute length: {attributeLength}, TagType: {tag.TagType}, sequence {tag.IsSequence}, datatype: {tag.DataType}");
-                }
-
-                if (!tag.IsSequence && attributeLength > 0)
-                {
-                    if (tag.TagType == TagType.Universal)
-                    {
-                        if (tag.DataType == UniversalDataType.Boolean)
-                        {
-                            _log.Debug(BitConverter.ToBoolean(packetBytes, i));
-                        }
-                        else if (tag.DataType == UniversalDataType.Integer)
-                        {
-                            var intbytes = new Byte[4];
-                            Buffer.BlockCopy(packetBytes, i, intbytes, 4 - attributeLength, attributeLength);
-                            _log.Debug(BitConverter.ToUInt32(intbytes.Reverse().ToArray(), 0));
-                        }
-                        else
-                        {
-                            var data = Encoding.UTF8.GetString(packetBytes, i, attributeLength);
-                            _log.Debug(data);
-                        }
-                    }
-                    else
-                    {
-                        var data = Encoding.UTF8.GetString(packetBytes, i, attributeLength);
-                        _log.Debug(data);
-                    }
-
-                    i += attributeLength;
-                }
-            }
-        }
+        private Int32 depth = 1;        
     }
 }
