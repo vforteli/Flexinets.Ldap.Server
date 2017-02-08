@@ -155,5 +155,24 @@ namespace Flexinets.Ldap.Tests
             var expected = "300c02010161070a010004000400";
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
+
+
+        [TestMethod]
+        public void TestLdapAttributeParse()
+        {
+            var expected = "30490201016044020103042d636e3d62696e64557365722c636e3d55736572732c64633d6465762c64633d636f6d70616e792c64633d636f6d801062696e645573657250617373776f7264";
+            var packetBytes = Utils.StringToByteArray(expected);
+            var packet = LdapAttribute.ParsePacket(packetBytes);
+            Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
+        }
+
+        [TestMethod]
+        public void TestLdapAttributeParse2()
+        {
+            var expected = "041364633d6b6172616b6f72756d2c64633d6e6574";
+            var packetBytes = Utils.StringToByteArray(expected);
+            var packet = LdapAttribute.ParsePacket(packetBytes);
+            Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
+        }
     }
 }

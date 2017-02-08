@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,6 +20,62 @@ namespace Flexinets.Ldap
         }
 
 
+        /// <summary>
+        /// Parse an ldap packet from a byte array. Assumed to be the complete packet
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static LdapAttribute ParsePacket(Byte[] bytes)
+        {
+            return ParseAttributes(bytes, 0, null)[0];
+        }
+
+
+        /// <summary>
+        /// Parse the child attributes
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="currentPosition"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        private static List<LdapAttribute> ParseAttributes(Byte[] bytes, Int32 currentPosition, Int32? length)
+        {
+            var list = new List<LdapAttribute>();
+            while (!length.HasValue || (currentPosition < length))
+            {
+                var tag = Tag.Parse(bytes[currentPosition]);
+                currentPosition++;
+                int i;
+                var attributeLength = Utils.BerLengthToInt(bytes, currentPosition, out i);                
+                currentPosition += i;
+
+                if (!length.HasValue)
+                {
+                    length = attributeLength + currentPosition;
+                }
+
+                var attribute = new LdapAttribute { Tag = tag };
+                if (tag.IsSequence)
+                {
+                    attribute.ChildAttributes = ParseAttributes(bytes, currentPosition, length);
+                }
+                else
+                {
+                    attribute.Value = new Byte[attributeLength];
+                    Buffer.BlockCopy(bytes, currentPosition, attribute.Value, 0, attributeLength);
+                }
+                list.Add(attribute);
+
+                currentPosition += attributeLength;
+            }
+            return list;
+        }
+
+
+        /// <summary>
+        /// Get the byte representation of the packet
+        /// </summary>
+        /// <returns></returns>
         public Byte[] GetBytes()
         {
             if (Tag.IsSequence)

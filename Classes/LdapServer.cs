@@ -78,6 +78,9 @@ namespace Flexinets.Ldap
                             break;
                         }
 
+                        //var ldapPacket = LdapAttribute.ParsePacket(bytes);
+                        //_log.Debug($"hurrurr {Utils.ByteArrayToString(ldapPacket.Value)}");
+
                         var data = Encoding.UTF8.GetString(bytes, 0, i);
                         _log.Debug($"Received {i} bytes: {data}");
                         _log.Debug(Utils.ByteArrayToString(bytes));
@@ -91,7 +94,7 @@ namespace Flexinets.Ldap
                         if (data.Contains("sAMAccountName"))
                         {
                             var searchresponse = Utils.StringToByteArray("300c02010265070a012004000400");   // object not found
-                            _log.Debug(Utils.BitsToString(new System.Collections.BitArray(searchresponse)));
+                            //_log.Debug(Utils.BitsToString(new System.Collections.BitArray(searchresponse)));
                             stream.Write(searchresponse, 0, searchresponse.Length);
                         }
                     }
