@@ -78,13 +78,15 @@ namespace Flexinets.Ldap
                             break;
                         }
 
-                        //var ldapPacket = LdapAttribute.ParsePacket(bytes);
-                        //_log.Debug($"hurrurr {Utils.ByteArrayToString(ldapPacket.Value)}");
-
+                        
                         var data = Encoding.UTF8.GetString(bytes, 0, i);
                         _log.Debug($"Received {i} bytes: {data}");
                         _log.Debug(Utils.ByteArrayToString(bytes));
                         ParseLdapPacket(bytes);
+
+                        var ldapPacket = LdapAttribute.ParsePacket(bytes);
+                        PrintValue(ldapPacket);
+
 
                         if (data.Contains("cn=bindUser,cn=Users,dc=dev,dc=company,dc=com"))
                         {
@@ -97,6 +99,8 @@ namespace Flexinets.Ldap
                             //_log.Debug(Utils.BitsToString(new System.Collections.BitArray(searchresponse)));
                             stream.Write(searchresponse, 0, searchresponse.Length);
                         }
+
+                        _log.Debug(" --- ");
                     }
 
                     _log.Debug($"Connection closed to {client.Client.RemoteEndPoint}");
@@ -108,6 +112,37 @@ namespace Flexinets.Ldap
                 }
             }
         }
+
+        private void PrintValue(LdapAttribute attribute)
+        {
+            if (attribute.Tag.IsSequence)
+            {
+                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} sequence tag");
+                foreach (var attr in attribute.ChildAttributes)
+                {
+                    depth++;
+                    PrintValue(attr);
+                    depth--;
+                }                
+            }
+            else
+            {
+                if (attribute.Tag.TagType == TagType.Universal)
+                {                    
+                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, DataType: {attribute.Tag.DataType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                }
+                else if (attribute.Tag.TagType == TagType.Application)
+                {
+                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, LdapOperation: {attribute.Tag.LdapOperation} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                }
+                else if (attribute.Tag.TagType == TagType.Context)
+                {
+                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, Context: {attribute.Tag} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                }
+                
+            }
+        }
+        private Int32 depth = 1;
 
 
         /// <summary>

@@ -122,5 +122,11 @@ namespace Flexinets.Ldap
 
             return attributeLength;
         }
+
+
+        public static String Repeat(String stuff, Int32 n)
+        {
+            return String.Concat(Enumerable.Repeat(stuff, n));
+        }
     }
 }

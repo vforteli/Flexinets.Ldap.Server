@@ -166,11 +166,35 @@ namespace Flexinets.Ldap.Tests
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
 
+
         [TestMethod]
         public void TestLdapAttributeParse2()
         {
             var expected = "041364633d6b6172616b6f72756d2c64633d6e6574";
             var packetBytes = Utils.StringToByteArray(expected);
+            var packet = LdapAttribute.ParsePacket(packetBytes);
+            Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
+        }
+
+
+        [TestMethod]
+        public void TestLdapAttributeParse3()
+        {
+            var expected = "30620201026340041164633d636f6d70616e792c64633d636f6d0a01020a010302010202010b010100a31a040e73414d4163636f756e744e616d65040876666f7274656c693000a01b30190417322e31362e3834302e312e3131333733302e332e342e32";
+            var packetBytes = Utils.StringToByteArray(expected);
+            Console.WriteLine(packetBytes.Length);
+            var packet = LdapAttribute.ParsePacket(packetBytes);
+            Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
+        }
+
+
+        [TestMethod]
+        public void TestLdapAttributeParse4()
+        {
+            var bytes = "30620201026340041164633d636f6d70616e792c64633d636f6d0a01020a010302010202010b010100a31a040e73414d4163636f756e744e616d65040876666f7274656c693000a01b30190417322e31362e3834302e312e3131333733302e332e342e3200000000";
+            var expected = "30620201026340041164633d636f6d70616e792c64633d636f6d0a01020a010302010202010b010100a31a040e73414d4163636f756e744e616d65040876666f7274656c693000a01b30190417322e31362e3834302e312e3131333733302e332e342e32";
+            var packetBytes = Utils.StringToByteArray(bytes);
+            Console.WriteLine(packetBytes.Length);
             var packet = LdapAttribute.ParsePacket(packetBytes);
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }

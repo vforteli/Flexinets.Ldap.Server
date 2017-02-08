@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Flexinets.Ldap
 {
@@ -46,18 +44,19 @@ namespace Flexinets.Ldap
                 var tag = Tag.Parse(bytes[currentPosition]);
                 currentPosition++;
                 int i;
-                var attributeLength = Utils.BerLengthToInt(bytes, currentPosition, out i);                
+                var attributeLength = Utils.BerLengthToInt(bytes, currentPosition, out i);
                 currentPosition += i;
 
+                // This is for the first pass, ie the packet itself when the length is unknown
                 if (!length.HasValue)
                 {
                     length = attributeLength + currentPosition;
                 }
-
+              
                 var attribute = new LdapAttribute { Tag = tag };
-                if (tag.IsSequence)
+                if (tag.IsSequence && attributeLength > 0)
                 {
-                    attribute.ChildAttributes = ParseAttributes(bytes, currentPosition, length);
+                    attribute.ChildAttributes = ParseAttributes(bytes, currentPosition, currentPosition + attributeLength);
                 }
                 else
                 {
@@ -101,6 +100,33 @@ namespace Flexinets.Ldap
                 Buffer.BlockCopy(lengthbytes, 0, attributeBytes, 1, lengthbytes.Length);
                 Buffer.BlockCopy(Value, 0, attributeBytes, 1 + lengthbytes.Length, Value.Length);
                 return attributeBytes;
+            }
+        }
+
+
+        public object GetValue()
+        {
+            if (Tag.TagType == TagType.Universal)
+            {
+                if (Tag.DataType == UniversalDataType.Boolean)
+                {
+                    return BitConverter.ToBoolean(Value, 0);
+                }
+                else if (Tag.DataType == UniversalDataType.Integer)
+                {
+                    var intbytes = new Byte[4];
+                    Buffer.BlockCopy(Value, 0, intbytes, 4 - Value.Length, Value.Length);
+                    return BitConverter.ToUInt32(intbytes.Reverse().ToArray(), 0);
+                }
+                else
+                {
+                    return Encoding.UTF8.GetString(Value, 0, Value.Length);
+                }
+            }
+            else
+            {
+                // todo add rest...
+                return Encoding.UTF8.GetString(Value, 0, Value.Length);
             }
         }
     }
