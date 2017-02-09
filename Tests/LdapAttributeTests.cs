@@ -11,7 +11,7 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytes()
         {
-            var attribute = new LdapAttribute(new Tag(UniversalDataType.Integer, false))
+            var attribute = new LdapAttribute(UniversalDataType.Integer, false)
             {
                 Value = new byte[] { 1 }
             };
@@ -23,7 +23,7 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytes2()
         {
-            var attribute = new LdapAttribute(new Tag(UniversalDataType.Integer, false))
+            var attribute = new LdapAttribute(UniversalDataType.Integer, false)
             {
                 Value = new byte[] { 2 }
             };
@@ -35,7 +35,7 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytesBoolean()
         {
-            var attribute = new LdapAttribute(new Tag(UniversalDataType.Boolean, false))
+            var attribute = new LdapAttribute(UniversalDataType.Boolean, false)
             {
                 Value = new byte[] { 1 }
             };
@@ -47,7 +47,7 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytesBoolean2()
         {
-            var attribute = new LdapAttribute(new Tag(UniversalDataType.Boolean, false))
+            var attribute = new LdapAttribute(UniversalDataType.Boolean, false)
             {
                 Value = new byte[] { 0 }
             };
@@ -59,7 +59,7 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytesString()
         {
-            var attribute = new LdapAttribute(new Tag(UniversalDataType.OctetString, false))
+            var attribute = new LdapAttribute(UniversalDataType.OctetString, false)
             {
                 Value = Encoding.UTF8.GetBytes("dc=karakorum,dc=net")
             };
@@ -71,23 +71,23 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeSequenceGetBytesString()
         {
-            var packet = new LdapAttribute(new Tag(UniversalDataType.Sequence, true));
-            packet.ChildAttributes.Add(new LdapAttribute(new Tag(UniversalDataType.Integer, false))
+            var packet = new LdapAttribute(UniversalDataType.Sequence, true);
+            packet.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false)
             {
                 Value = new Byte[] { 1 }
             });
 
             // Bind request
-            var bindrequest = new LdapAttribute(new Tag(LdapOperation.BindRequest, true));
-            bindrequest.ChildAttributes.Add(new LdapAttribute(new Tag(UniversalDataType.Integer, false))
+            var bindrequest = new LdapAttribute(LdapOperation.BindRequest, true);
+            bindrequest.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false)
             {
                 Value = new Byte[] { 3 }    // version 3
             });
-            bindrequest.ChildAttributes.Add(new LdapAttribute(new Tag(UniversalDataType.OctetString, false))
+            bindrequest.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false)
             {
                 Value = Encoding.UTF8.GetBytes("cn=bindUser,cn=Users,dc=dev,dc=company,dc=com")
             });
-            bindrequest.ChildAttributes.Add(new LdapAttribute(new Tag((byte)0, false))
+            bindrequest.ChildAttributes.Add(new LdapAttribute((byte)0, false)
             {
                 Value = Encoding.UTF8.GetBytes("bindUserPassword")
             });
@@ -103,25 +103,25 @@ namespace Flexinets.Ldap.Tests
         public void TestLdapAttributeSequenceGetBytes2()
         {
             // Packet
-            var packet = new LdapAttribute(new Tag(UniversalDataType.Sequence, true));
+            var packet = new LdapAttribute(UniversalDataType.Sequence, true);
 
             // Message id
-            packet.ChildAttributes.Add(new LdapAttribute(new Tag(UniversalDataType.Integer, false))
+            packet.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false)
             {
                 Value = new Byte[] { 1 }
             });
 
             // Bind request
-            var bindresponse = new LdapAttribute(new Tag(LdapOperation.BindResponse, true));
+            var bindresponse = new LdapAttribute(LdapOperation.BindResponse, true);
 
-            var resultCode = new LdapAttribute(new Tag(UniversalDataType.Enumerated, false))
+            var resultCode = new LdapAttribute(UniversalDataType.Enumerated, false)
             {
                 Value = new Byte[] { (Byte)LdapResult.success }
             };
             bindresponse.ChildAttributes.Add(resultCode);
 
-            var matchedDn = new LdapAttribute(new Tag(UniversalDataType.OctetString, false));
-            var diagnosticMessage = new LdapAttribute(new Tag(UniversalDataType.OctetString, false));
+            var matchedDn = new LdapAttribute(UniversalDataType.OctetString, false);
+            var diagnosticMessage = new LdapAttribute(UniversalDataType.OctetString, false);
 
             bindresponse.ChildAttributes.Add(matchedDn);
             bindresponse.ChildAttributes.Add(diagnosticMessage);

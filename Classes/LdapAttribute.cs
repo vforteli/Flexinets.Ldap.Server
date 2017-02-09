@@ -61,7 +61,44 @@ namespace Flexinets.Ldap
         }
 
 
-        public LdapAttribute(Tag tag)
+        /// <summary>
+        /// Create an application attribute
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="isConstructed"></param>
+        public LdapAttribute(LdapOperation operation, Boolean isConstructed)
+        {
+            _tag = new Tag(operation, isConstructed);
+        }
+
+
+        /// <summary>
+        /// Create a universal attribute
+        /// </summary>
+        /// <param name="dataType"></param>
+        /// <param name="isConstructed"></param>
+        public LdapAttribute(UniversalDataType dataType, Boolean isConstructed)
+        {
+            _tag = new Tag(dataType, isConstructed);
+        }
+
+
+        /// <summary>
+        /// Create a context attribute
+        /// </summary>
+        /// <param name="contextType"></param>
+        /// <param name="isConstructed"></param>
+        public LdapAttribute(Byte contextType, Boolean isConstructed)
+        {
+            _tag = new Tag(contextType, isConstructed);
+        }
+
+
+        /// <summary>
+        /// Create an attribute with tag
+        /// </summary>
+        /// <param name="tag"></param>
+        private LdapAttribute(Tag tag)
         {
             _tag = tag;
         }

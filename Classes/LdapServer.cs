@@ -87,7 +87,7 @@ namespace Flexinets.Ldap
                         var bindrequest = ldapPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest);
                         if (bindrequest != null)
                         {
-                            var responseBytes = HandleBindRequest(stream, bindrequest);
+                            var responseBytes = HandleBindRequest(bindrequest);
                             stream.Write(responseBytes, 0, responseBytes.Length);
                         }
 
@@ -115,7 +115,7 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="bindrequest"></param>
-        private static Byte[] HandleBindRequest(NetworkStream stream, LdapAttribute bindrequest)
+        private static Byte[] HandleBindRequest(LdapAttribute bindrequest)
         {
             var username = bindrequest.ChildAttributes[1].GetValue().ToString();
             var password = bindrequest.ChildAttributes[2].GetValue().ToString();
@@ -126,15 +126,14 @@ namespace Flexinets.Ldap
             {
                 response = LdapResult.success;
             }
+            
+            var packet = new LdapAttribute(UniversalDataType.Sequence, true);
+            packet.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false) { Value = new Byte[] { 1 } }); // messageId
 
-            // such verbose...
-            var packet = new LdapAttribute(new Tag(UniversalDataType.Sequence, true));
-            packet.ChildAttributes.Add(new LdapAttribute(new Tag(UniversalDataType.Integer, false)) { Value = new Byte[] { 1 } }); // messageId
-
-            var bindResponse = new LdapAttribute(new Tag(LdapOperation.BindResponse, true));
-            bindResponse.ChildAttributes.Add(new LdapAttribute(new Tag(UniversalDataType.Enumerated, false)) { Value = new Byte[] { (byte)response } }); // success
-            bindResponse.ChildAttributes.Add(new LdapAttribute(new Tag(UniversalDataType.OctetString, false)));  // matchedDN
-            bindResponse.ChildAttributes.Add(new LdapAttribute(new Tag(UniversalDataType.OctetString, false)));  // diagnosticMessage
+            var bindResponse = new LdapAttribute(LdapOperation.BindResponse, true);
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (byte)response } }); // success
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
 
             packet.ChildAttributes.Add(bindResponse);
 
@@ -146,7 +145,7 @@ namespace Flexinets.Ldap
         /// Dump the packet to log
         /// </summary>
         /// <param name="attribute"></param>
-        private void PrintValue(LdapAttribute attribute)
+        private void PrintValue(LdapAttribute attribute, Int32 depth = 1)
         {
             if (attribute != null)
             {
@@ -168,12 +167,11 @@ namespace Flexinets.Ldap
                     foreach (var attr in attribute.ChildAttributes)
                     {
                         depth++;
-                        PrintValue(attr);
+                        PrintValue(attr, depth);
                         depth--;
                     }
                 }
             }
         }
-        private Int32 depth = 1;
     }
 }
