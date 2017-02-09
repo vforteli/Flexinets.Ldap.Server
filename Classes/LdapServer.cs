@@ -78,7 +78,7 @@ namespace Flexinets.Ldap
                             break;
                         }
 
-                        
+
                         var data = Encoding.UTF8.GetString(bytes, 0, i);
                         _log.Debug($"Received {i} bytes: {data}");
                         _log.Debug(Utils.ByteArrayToString(bytes));
@@ -87,11 +87,30 @@ namespace Flexinets.Ldap
                         PrintValue(ldapPacket);
 
 
-                        if (data.Contains("cn=bindUser,cn=Users,dc=dev,dc=company,dc=com"))
+                        var bindrequest = ldapPacket.ChildAttributes.SingleOrDefault(o => o.Tag.Class == TagClass.Application && o.Tag.LdapOperation == LdapOperation.BindRequest);
+                        if (bindrequest != null)
                         {
-                            var bindresponse = Utils.StringToByteArray("300c02010161070a010004000400"); // bind success...
-                            stream.Write(bindresponse, 0, bindresponse.Length);
+                            var username = bindrequest.ChildAttributes[1].GetValue().ToString();
+                            var password = bindrequest.ChildAttributes[2].GetValue().ToString();
+
+                            if (username == "cn=bindUser,cn=Users,dc=dev,dc=company,dc=com" && password == "bindUserPassword")
+                            {
+                                // such verbose...
+                                var packet = new LdapAttribute { Tag = new Tag(UniversalDataType.Sequence, true) };
+                                packet.ChildAttributes.Add(new LdapAttribute { Tag = new Tag(UniversalDataType.Integer, false), Value = new Byte[] { 1 } }); // messageId
+
+                                var bindResponse = new LdapAttribute { Tag = new Tag(LdapOperation.BindResponse, true) };
+                                bindResponse.ChildAttributes.Add(new LdapAttribute { Tag = new Tag(UniversalDataType.Enumerated, false), Value = new Byte[] { (byte)LdapResult.success } }); // success
+                                bindResponse.ChildAttributes.Add(new LdapAttribute { Tag = new Tag(UniversalDataType.OctetString, false) });  // matchedDN
+                                bindResponse.ChildAttributes.Add(new LdapAttribute { Tag = new Tag(UniversalDataType.OctetString, false) });  // diagnosticMessage
+                                
+                                packet.ChildAttributes.Add(bindResponse);
+
+                                var responseBytes = packet.GetBytes();
+                                stream.Write(responseBytes, 0, responseBytes.Length);
+                            }
                         }
+
                         if (data.Contains("sAMAccountName"))
                         {
                             var searchresponse = Utils.StringToByteArray("300c02010265070a012004000400");   // object not found
@@ -114,29 +133,32 @@ namespace Flexinets.Ldap
 
         private void PrintValue(LdapAttribute attribute)
         {
-            if (attribute.Tag.Class == TagClass.Universal)
+            if (attribute != null)
             {
-                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, DataType: {attribute.Tag.DataType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
-            }
-            else if (attribute.Tag.Class == TagClass.Application)
-            {
-                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, LdapOperation: {attribute.Tag.LdapOperation} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
-            }
-            else if (attribute.Tag.Class == TagClass.Context)
-            {
-                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, Context: {attribute.Tag.ContextType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
-            }
-
-            if (attribute.Tag.IsConstructed)
-            {                
-                foreach (var attr in attribute.ChildAttributes)
+                if (attribute.Tag.Class == TagClass.Universal)
                 {
-                    depth++;
-                    PrintValue(attr);
-                    depth--;
-                }                
-            }            
+                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, DataType: {attribute.Tag.DataType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                }
+                else if (attribute.Tag.Class == TagClass.Application)
+                {
+                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, LdapOperation: {attribute.Tag.LdapOperation} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                }
+                else if (attribute.Tag.Class == TagClass.Context)
+                {
+                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, Context: {attribute.Tag.ContextType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                }
+
+                if (attribute.Tag.IsConstructed)
+                {
+                    foreach (var attr in attribute.ChildAttributes)
+                    {
+                        depth++;
+                        PrintValue(attr);
+                        depth--;
+                    }
+                }
+            }
         }
-        private Int32 depth = 1;        
+        private Int32 depth = 1;
     }
 }

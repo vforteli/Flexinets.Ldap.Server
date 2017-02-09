@@ -49,7 +49,7 @@
     <Compile Include="Classes\LdapOperation.cs" />
     <Compile Include="Classes\LdapResult.cs" />
     <Compile Include="Classes\LdapServer.cs" />
-    <Compile Include="Classes\LdapTagType.cs" />
+    <Compile Include="Classes\TagClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Classes\Tag.cs" />
     <Compile Include="Tests\LdapAttributeTests.cs" />
