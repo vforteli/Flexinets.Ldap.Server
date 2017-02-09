@@ -54,7 +54,7 @@ namespace Flexinets.Ldap
                 }
               
                 var attribute = new LdapAttribute { Tag = tag };
-                if (tag.IsSequence && attributeLength > 0)
+                if (tag.IsConstructed && attributeLength > 0)
                 {
                     attribute.ChildAttributes = ParseAttributes(bytes, currentPosition, currentPosition + attributeLength);
                 }
@@ -77,7 +77,7 @@ namespace Flexinets.Ldap
         /// <returns></returns>
         public Byte[] GetBytes()
         {
-            if (Tag.IsSequence)
+            if (Tag.IsConstructed)
             {
                 var list = new List<Byte>();
                 foreach (var attribute in ChildAttributes)
@@ -106,7 +106,7 @@ namespace Flexinets.Ldap
 
         public object GetValue()
         {
-            if (Tag.TagType == TagType.Universal)
+            if (Tag.Class == TagClass.Universal)
             {
                 if (Tag.DataType == UniversalDataType.Boolean)
                 {

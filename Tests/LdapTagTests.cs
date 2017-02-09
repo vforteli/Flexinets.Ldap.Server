@@ -25,8 +25,8 @@ namespace Flexinets.Ldap.Tests
         {
             var tag = Tag.Parse(Utils.StringToByteArray("30")[0]);
             Assert.AreEqual(UniversalDataType.Sequence, tag.DataType);
-            Assert.AreEqual(true, tag.IsSequence);
-            Assert.AreEqual(TagType.Universal, tag.TagType);
+            Assert.AreEqual(true, tag.IsConstructed);
+            Assert.AreEqual(TagClass.Universal, tag.Class);
         }
 
 
@@ -43,8 +43,8 @@ namespace Flexinets.Ldap.Tests
         {
             var tag = Tag.Parse(Utils.StringToByteArray("02")[0]);
             Assert.AreEqual(UniversalDataType.Integer, tag.DataType);
-            Assert.AreEqual(false, tag.IsSequence);
-            Assert.AreEqual(TagType.Universal, tag.TagType);
+            Assert.AreEqual(false, tag.IsConstructed);
+            Assert.AreEqual(TagClass.Universal, tag.Class);
         }
 
 
@@ -61,8 +61,8 @@ namespace Flexinets.Ldap.Tests
         {
             var tag = Tag.Parse(Utils.StringToByteArray("63")[0]);
             Assert.AreEqual(LdapOperation.SearchRequest, tag.LdapOperation);
-            Assert.AreEqual(true, tag.IsSequence);
-            Assert.AreEqual(TagType.Application, tag.TagType);
+            Assert.AreEqual(true, tag.IsConstructed);
+            Assert.AreEqual(TagClass.Application, tag.Class);
         }
     }
 }

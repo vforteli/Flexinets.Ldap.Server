@@ -9,7 +9,7 @@ namespace Flexinets.Ldap
         private Byte _tagByte;
 
 
-        public Boolean IsSequence
+        public Boolean IsConstructed
         {
             get
             {
@@ -18,11 +18,11 @@ namespace Flexinets.Ldap
         }
 
 
-        public TagType TagType
+        public TagClass Class
         {
             get
             {
-                return (TagType)(_tagByte >> 6);
+                return (TagClass)(_tagByte >> 6);
             }
         }
 
@@ -61,7 +61,7 @@ namespace Flexinets.Ldap
         /// <param name="isSequence"></param>
         public Tag(LdapOperation operation, Boolean isSequence)
         {
-            _tagByte = (byte)((byte)operation + (Convert.ToByte(isSequence) << 5) + ((byte)TagType.Application << 6));
+            _tagByte = (byte)((byte)operation + (Convert.ToByte(isSequence) << 5) + ((byte)TagClass.Application << 6));
         }
 
 
@@ -72,7 +72,7 @@ namespace Flexinets.Ldap
         /// <param name="operation"></param>
         public Tag(UniversalDataType dataType, Boolean isSequence)
         {
-            _tagByte = (byte)((byte)dataType + (Convert.ToByte(isSequence) << 5) + ((byte)TagType.Universal << 6));
+            _tagByte = (byte)((byte)dataType + (Convert.ToByte(isSequence) << 5) + ((byte)TagClass.Universal << 6));
         }
 
 
@@ -83,7 +83,7 @@ namespace Flexinets.Ldap
         /// <param name="operation"></param>
         public Tag(Byte context, Boolean isSequence)
         {
-            _tagByte = (byte)((byte)context + (Convert.ToByte(isSequence) << 5) + ((byte)TagType.Context << 6));
+            _tagByte = (byte)((byte)context + (Convert.ToByte(isSequence) << 5) + ((byte)TagClass.Context << 6));
         }
 
 

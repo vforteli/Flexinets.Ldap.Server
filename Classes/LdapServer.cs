@@ -114,20 +114,20 @@ namespace Flexinets.Ldap
 
         private void PrintValue(LdapAttribute attribute)
         {
-            if (attribute.Tag.TagType == TagType.Universal)
+            if (attribute.Tag.Class == TagClass.Universal)
             {
-                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, DataType: {attribute.Tag.DataType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, DataType: {attribute.Tag.DataType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
             }
-            else if (attribute.Tag.TagType == TagType.Application)
+            else if (attribute.Tag.Class == TagClass.Application)
             {
-                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, LdapOperation: {attribute.Tag.LdapOperation} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, LdapOperation: {attribute.Tag.LdapOperation} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
             }
-            else if (attribute.Tag.TagType == TagType.Context)
+            else if (attribute.Tag.Class == TagClass.Context)
             {
-                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.TagType} tag, Context: {attribute.Tag.ContextType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Tag.Class} tag, Context: {attribute.Tag.ContextType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
             }
 
-            if (attribute.Tag.IsSequence)
+            if (attribute.Tag.IsConstructed)
             {                
                 foreach (var attr in attribute.ChildAttributes)
                 {
