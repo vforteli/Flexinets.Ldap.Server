@@ -8,7 +8,7 @@ namespace Flexinets.Ldap
     public class LdapAttribute
     {
         private Tag _tag;
-        public Byte[] Value = new byte[0];
+        public Byte[] Value = new byte[0];  // todo create typed getter and setter
         public List<LdapAttribute> ChildAttributes = new List<LdapAttribute>();
 
         public TagClass Class
@@ -91,6 +91,19 @@ namespace Flexinets.Ldap
         public LdapAttribute(Byte contextType, Boolean isConstructed)
         {
             _tag = new Tag(contextType, isConstructed);
+        }
+
+
+        /// <summary>
+        /// Create an ldap packet attribute with message id
+        /// </summary>
+        /// <param name="messageId"></param>
+        /// <returns></returns>
+        public static LdapAttribute CreatePacket(Int32 messageId)
+        {
+            var packet = new LdapAttribute(UniversalDataType.Sequence, true);
+            packet.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false) { Value = new Byte[] { (byte)messageId } });
+            return packet;
         }
 
 

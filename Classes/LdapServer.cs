@@ -59,54 +59,80 @@ namespace Flexinets.Ldap
         {
             if (Running)
             {
-                var client = _server.EndAcceptTcpClient(ar);
-                _server.BeginAcceptTcpClient(ReceiveCallback, null);
-
-                _log.Debug($"Connection from {client.Client.RemoteEndPoint}");
-
-                try
+                using (var client = _server.EndAcceptTcpClient(ar))
                 {
-                    var stream = client.GetStream();
+                    _server.BeginAcceptTcpClient(ReceiveCallback, null);
+                    _log.Debug($"Connection from {client.Client.RemoteEndPoint}");
 
-                    int i = 0;
-                    while (true)
+                    try
                     {
-                        var bytes = new Byte[1024];
-                        i = stream.Read(bytes, 0, bytes.Length);
-                        if (i == 0)
+                        var stream = client.GetStream();
+
+                        int i = 0;
+                        while (true)
                         {
-                            break;
+                            var bytes = new Byte[1024];
+                            i = stream.Read(bytes, 0, bytes.Length);
+                            if (i == 0)
+                            {
+                                break;
+                            }
+
+                            _log.Debug($"Received {i} bytes: {Utils.ByteArrayToString(bytes)}");
+
+                            var ldapPacket = LdapAttribute.ParsePacket(bytes);
+                            PrintValue(ldapPacket);
+
+
+                            var bindrequest = ldapPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest);
+                            if (bindrequest != null)
+                            {
+                                var responseBytes = HandleBindRequest(bindrequest);
+                                stream.Write(responseBytes, 0, responseBytes.Length);
+                            }
+
+                            var searchRequest = ldapPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest);
+                            if (searchRequest != null)
+                            {
+                                var response = HandleSearchRequest(searchRequest);
+                                stream.Write(response, 0, response.Length);
+                            }
                         }
 
-                        _log.Debug($"Received {i} bytes: {Utils.ByteArrayToString(bytes)}");
-
-                        var ldapPacket = LdapAttribute.ParsePacket(bytes);
-                        PrintValue(ldapPacket);
-
-
-                        var bindrequest = ldapPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest);
-                        if (bindrequest != null)
-                        {
-                            var responseBytes = HandleBindRequest(bindrequest);
-                            stream.Write(responseBytes, 0, responseBytes.Length);
-                        }
-
-                        var searchRequest = ldapPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest);
-                        if (searchRequest != null)
-                        {
-                            var searchresponse = Utils.StringToByteArray("300c02010265070a012004000400");   // object not found
-                            stream.Write(searchresponse, 0, searchresponse.Length);
-                        }
+                        _log.Debug($"Connection closed to {client.Client.RemoteEndPoint}");
                     }
-
-                    _log.Debug($"Connection closed to {client.Client.RemoteEndPoint}");
-                    client.Close();
-                }
-                catch (IOException ioex)
-                {
-                    _log.Warn("oops", ioex);
+                    catch (IOException ioex)
+                    {
+                        _log.Warn("oops", ioex);
+                    }
                 }
             }
+        }
+
+
+        /// <summary>
+        /// Handle search requests
+        /// </summary>
+        /// <param name="searchRequest"></param>
+        /// <returns></returns>
+        private Byte[] HandleSearchRequest(LdapAttribute searchRequest)
+        {
+            var filter = searchRequest.ChildAttributes[6];
+            if (filter.ContextType == 3) // equalityMatch
+            {
+                if ($"{filter.ChildAttributes[0].GetValue()}={filter.ChildAttributes[1].GetValue()}" == "sAMAccountName=testuser")
+                {
+                    _log.Debug($"filter: {filter.ChildAttributes[0].GetValue()}={filter.ChildAttributes[1].GetValue()}");
+                }
+            }
+
+            var packet = LdapAttribute.CreatePacket(2); // todo sort out this message id...
+            var response = new LdapAttribute(LdapOperation.SearchResultDone, true);
+            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (Byte)LdapResult.success } }); // success
+            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
+            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
+            packet.ChildAttributes.Add(response);
+            return packet.GetBytes();
         }
 
 
@@ -115,7 +141,7 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="bindrequest"></param>
-        private static Byte[] HandleBindRequest(LdapAttribute bindrequest)
+        private Byte[] HandleBindRequest(LdapAttribute bindrequest)
         {
             var username = bindrequest.ChildAttributes[1].GetValue().ToString();
             var password = bindrequest.ChildAttributes[2].GetValue().ToString();
@@ -126,17 +152,13 @@ namespace Flexinets.Ldap
             {
                 response = LdapResult.success;
             }
-            
-            var packet = new LdapAttribute(UniversalDataType.Sequence, true);
-            packet.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false) { Value = new Byte[] { 1 } }); // messageId
 
+            var packet = LdapAttribute.CreatePacket(1); // todo sort out this message id...
             var bindResponse = new LdapAttribute(LdapOperation.BindResponse, true);
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (byte)response } }); // success
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (Byte)response } }); // success
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
-
             packet.ChildAttributes.Add(bindResponse);
-
             return packet.GetBytes();
         }
 
