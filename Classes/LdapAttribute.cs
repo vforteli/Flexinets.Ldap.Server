@@ -7,14 +7,63 @@ namespace Flexinets.Ldap
 {
     public class LdapAttribute
     {
-        public Tag Tag;
+        private Tag _tag;
         public Byte[] Value = new byte[0];
         public List<LdapAttribute> ChildAttributes = new List<LdapAttribute>();
 
-
-        public LdapAttribute()
+        public TagClass Class
         {
+            get
+            {
+                return _tag.Class;
+            }
+        }
 
+        public Boolean IsConstructed
+        {
+            get { return _tag.IsConstructed; }
+        }
+
+        public LdapOperation LdapOperation
+        {
+            get
+            {
+                if (_tag.Class == TagClass.Application)
+                {
+                    return _tag.LdapOperation;
+                }
+                throw new NotImplementedException("Wrong attribute class for this operation");
+            }
+        }
+
+        public UniversalDataType DataType
+        {
+            get
+            {
+                if (_tag.Class == TagClass.Universal)
+                {
+                    return _tag.DataType;
+                }
+                throw new NotImplementedException("Wrong attribute class for this operation");
+            }
+        }
+
+        public Byte ContextType
+        {
+            get
+            {
+                if (_tag.Class == TagClass.Context)
+                {
+                    return _tag.ContextType;
+                }
+                throw new NotImplementedException("Wrong attribute class for this operation");
+            }
+        }
+
+
+        public LdapAttribute(Tag tag)
+        {
+            _tag = tag;
         }
 
 
@@ -52,8 +101,8 @@ namespace Flexinets.Ldap
                 {
                     length = attributeLength + currentPosition;
                 }
-              
-                var attribute = new LdapAttribute { Tag = tag };
+
+                var attribute = new LdapAttribute(tag);
                 if (tag.IsConstructed && attributeLength > 0)
                 {
                     attribute.ChildAttributes = ParseAttributes(bytes, currentPosition, currentPosition + attributeLength);
@@ -77,7 +126,7 @@ namespace Flexinets.Ldap
         /// <returns></returns>
         public Byte[] GetBytes()
         {
-            if (Tag.IsConstructed)
+            if (_tag.IsConstructed)
             {
                 var list = new List<Byte>();
                 foreach (var attribute in ChildAttributes)
@@ -87,7 +136,7 @@ namespace Flexinets.Ldap
 
                 var lengthbytes = Utils.IntToBerLength(list.Count);
                 var attributeBytes = new byte[1 + lengthbytes.Length + list.Count];
-                attributeBytes[0] = Tag.GetTagByte();
+                attributeBytes[0] = _tag.GetTagByte();
                 Buffer.BlockCopy(lengthbytes, 0, attributeBytes, 1, lengthbytes.Length);
                 Buffer.BlockCopy(list.ToArray(), 0, attributeBytes, 1 + lengthbytes.Length, list.Count);
                 return attributeBytes;
@@ -96,7 +145,7 @@ namespace Flexinets.Ldap
             {
                 var lengthbytes = Utils.IntToBerLength(Value.Length);
                 var attributeBytes = new byte[1 + lengthbytes.Length + Value.Length];
-                attributeBytes[0] = Tag.GetTagByte();
+                attributeBytes[0] = _tag.GetTagByte();
                 Buffer.BlockCopy(lengthbytes, 0, attributeBytes, 1, lengthbytes.Length);
                 Buffer.BlockCopy(Value, 0, attributeBytes, 1 + lengthbytes.Length, Value.Length);
                 return attributeBytes;
@@ -106,13 +155,13 @@ namespace Flexinets.Ldap
 
         public object GetValue()
         {
-            if (Tag.Class == TagClass.Universal)
+            if (_tag.Class == TagClass.Universal)
             {
-                if (Tag.DataType == UniversalDataType.Boolean)
+                if (_tag.DataType == UniversalDataType.Boolean)
                 {
                     return BitConverter.ToBoolean(Value, 0);
                 }
-                else if (Tag.DataType == UniversalDataType.Integer)
+                else if (_tag.DataType == UniversalDataType.Integer)
                 {
                     var intbytes = new Byte[4];
                     Buffer.BlockCopy(Value, 0, intbytes, 4 - Value.Length, Value.Length);
