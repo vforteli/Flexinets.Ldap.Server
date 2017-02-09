@@ -174,5 +174,21 @@ namespace Flexinets.Ldap.Tests
             var packet = LdapAttribute.ParsePacket(packetBytes);
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
+
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestAttributeClass()
+        {
+            var attribute = new LdapAttribute(LdapOperation.BindRequest, true);
+            var foo = attribute.DataType;
+        }
+
+        [TestMethod]
+        public void TestAttributeClass2()
+        {
+            var attribute = new LdapAttribute(LdapOperation.BindRequest, true);
+            Assert.AreEqual(LdapOperation.BindRequest, attribute.LdapOperation);
+        }
     }
 }

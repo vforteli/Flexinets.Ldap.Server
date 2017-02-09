@@ -32,7 +32,7 @@ namespace Flexinets.Ldap
                 {
                     return _tag.LdapOperation;
                 }
-                throw new NotImplementedException("Wrong attribute class for this operation");
+                throw new InvalidOperationException("Wrong attribute class for this operation");
             }
         }
 
@@ -44,7 +44,7 @@ namespace Flexinets.Ldap
                 {
                     return _tag.DataType;
                 }
-                throw new NotImplementedException("Wrong attribute class for this operation");
+                throw new InvalidOperationException("Wrong attribute class for this operation");
             }
         }
 
@@ -56,7 +56,7 @@ namespace Flexinets.Ldap
                 {
                     return _tag.ContextType;
                 }
-                throw new NotImplementedException("Wrong attribute class for this operation");
+                throw new InvalidOperationException("Wrong attribute class for this operation");
             }
         }
 
