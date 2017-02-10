@@ -117,9 +117,9 @@ namespace Flexinets.Ldap
             var filter = searchRequest.ChildAttributes[6];
             if (filter.ContextType == 3) // equalityMatch
             {
-                if ($"{filter.ChildAttributes[0].GetValue()}={filter.ChildAttributes[1].GetValue()}" == "sAMAccountName=testuser")
+                if ($"{filter.ChildAttributes[0].GetValue<String>()}={filter.ChildAttributes[1].GetValue<String>()}" == "sAMAccountName=testuser")
                 {
-                    _log.Debug($"filter: {filter.ChildAttributes[0].GetValue()}={filter.ChildAttributes[1].GetValue()}");
+                    _log.Debug($"filter: {filter.ChildAttributes[0].GetValue<String>()}={filter.ChildAttributes[1].GetValue<String>()}");
                 }
             }
 
@@ -140,8 +140,8 @@ namespace Flexinets.Ldap
         private Byte[] HandleBindRequest(LdapPacket requestPacket)
         {
             var bindrequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest);
-            var username = bindrequest.ChildAttributes[1].GetValue().ToString();
-            var password = bindrequest.ChildAttributes[2].GetValue().ToString();
+            var username = bindrequest.ChildAttributes[1].GetValue<String>();
+            var password = bindrequest.ChildAttributes[2].GetValue<String>();
 
             var response = LdapResult.invalidCredentials;
             if (username == "cn=bindUser,cn=Users,dc=dev,dc=company,dc=com" && password == "bindUserPassword")

@@ -9,7 +9,7 @@ namespace Flexinets.Ldap
         {
             get
             {
-                return Convert.ToInt32(ChildAttributes[0].GetValue());  // todo this should be an int32...                
+                return ChildAttributes[0].GetValue<Int32>();             
             }
         }
 

@@ -8,7 +8,7 @@ namespace Flexinets.Ldap
     public class LdapAttribute
     {
         private Tag _tag;
-        public Byte[] Value = new byte[0];  // todo create typed getter and setter
+        public Byte[] Value = new byte[0];  // todo create typed setter
         public List<LdapAttribute> ChildAttributes = new List<LdapAttribute>();
 
         public TagClass Class
@@ -137,6 +137,21 @@ namespace Flexinets.Ldap
         }
 
 
+        /// <summary>
+        /// Get a typed value
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T GetValue<T>()
+        {
+            return (T)Convert.ChangeType(GetValue(), typeof(T));
+        }
+
+
+        /// <summary>
+        /// Get an object value
+        /// </summary>
+        /// <returns></returns>
         public object GetValue()
         {
             if (_tag.Class == TagClass.Universal)
@@ -149,7 +164,7 @@ namespace Flexinets.Ldap
                 {
                     var intbytes = new Byte[4];
                     Buffer.BlockCopy(Value, 0, intbytes, 4 - Value.Length, Value.Length);
-                    return BitConverter.ToUInt32(intbytes.Reverse().ToArray(), 0);
+                    return BitConverter.ToInt32(intbytes.Reverse().ToArray(), 0);
                 }
                 else
                 {
