@@ -138,7 +138,7 @@ namespace Flexinets.Ldap.Tests
         {
             var expected = "30490201016044020103042d636e3d62696e64557365722c636e3d55736572732c64633d6465762c64633d636f6d70616e792c64633d636f6d801062696e645573657250617373776f7264";
             var packetBytes = Utils.StringToByteArray(expected);
-            var packet = LdapAttribute.ParsePacket(packetBytes);
+            var packet = LdapPacket.ParsePacket(packetBytes);
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
 
@@ -148,7 +148,7 @@ namespace Flexinets.Ldap.Tests
         {
             var expected = "041364633d6b6172616b6f72756d2c64633d6e6574";
             var packetBytes = Utils.StringToByteArray(expected);
-            var packet = LdapAttribute.ParsePacket(packetBytes);
+            var packet = LdapPacket.ParsePacket(packetBytes);
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
 
@@ -159,7 +159,7 @@ namespace Flexinets.Ldap.Tests
             var expected = "30620201026340041164633d636f6d70616e792c64633d636f6d0a01020a010302010202010b010100a31a040e73414d4163636f756e744e616d65040876666f7274656c693000a01b30190417322e31362e3834302e312e3131333733302e332e342e32";
             var packetBytes = Utils.StringToByteArray(expected);
             Console.WriteLine(packetBytes.Length);
-            var packet = LdapAttribute.ParsePacket(packetBytes);
+            var packet = LdapPacket.ParsePacket(packetBytes);
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
 
@@ -171,7 +171,7 @@ namespace Flexinets.Ldap.Tests
             var expected = "30620201026340041164633d636f6d70616e792c64633d636f6d0a01020a010302010202010b010100a31a040e73414d4163636f756e744e616d65040876666f7274656c693000a01b30190417322e31362e3834302e312e3131333733302e332e342e32";
             var packetBytes = Utils.StringToByteArray(bytes);
             Console.WriteLine(packetBytes.Length);
-            var packet = LdapAttribute.ParsePacket(packetBytes);
+            var packet = LdapPacket.ParsePacket(packetBytes);
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
 
@@ -189,6 +189,14 @@ namespace Flexinets.Ldap.Tests
         {
             var attribute = new LdapAttribute(LdapOperation.BindRequest, true);
             Assert.AreEqual(LdapOperation.BindRequest, attribute.LdapOperation);
+        }
+
+
+        [TestMethod]
+        public void TestPacketMessageId()
+        {
+            var packet = new LdapPacket(4);
+            Assert.AreEqual(4, packet.MessageId);
         }
     }
 }

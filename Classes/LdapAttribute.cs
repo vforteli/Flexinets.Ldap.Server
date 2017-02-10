@@ -95,80 +95,14 @@ namespace Flexinets.Ldap
 
 
         /// <summary>
-        /// Create an ldap packet attribute with message id
-        /// </summary>
-        /// <param name="messageId"></param>
-        /// <returns></returns>
-        public static LdapAttribute CreatePacket(Int32 messageId)
-        {
-            var packet = new LdapAttribute(UniversalDataType.Sequence, true);
-            packet.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false) { Value = new Byte[] { (byte)messageId } });
-            return packet;
-        }
-
-
-        /// <summary>
         /// Create an attribute with tag
         /// </summary>
         /// <param name="tag"></param>
-        private LdapAttribute(Tag tag)
+        protected LdapAttribute(Tag tag)
         {
             _tag = tag;
         }
-
-
-        /// <summary>
-        /// Parse an ldap packet from a byte array. Assumed to be the complete packet
-        /// </summary>
-        /// <param name="bytes"></param>
-        /// <returns></returns>
-        public static LdapAttribute ParsePacket(Byte[] bytes)
-        {
-            return ParseAttributes(bytes, 0, null)[0];
-        }
-
-
-        /// <summary>
-        /// Parse the child attributes
-        /// </summary>
-        /// <param name="bytes"></param>
-        /// <param name="currentPosition"></param>
-        /// <param name="length"></param>
-        /// <returns></returns>
-        private static List<LdapAttribute> ParseAttributes(Byte[] bytes, Int32 currentPosition, Int32? length)
-        {
-            var list = new List<LdapAttribute>();
-            while (!length.HasValue || (currentPosition < length))
-            {
-                var tag = Tag.Parse(bytes[currentPosition]);
-                currentPosition++;
-                int i;
-                var attributeLength = Utils.BerLengthToInt(bytes, currentPosition, out i);
-                currentPosition += i;
-
-                // This is for the first pass, ie the packet itself when the length is unknown
-                if (!length.HasValue)
-                {
-                    length = attributeLength + currentPosition;
-                }
-
-                var attribute = new LdapAttribute(tag);
-                if (tag.IsConstructed && attributeLength > 0)
-                {
-                    attribute.ChildAttributes = ParseAttributes(bytes, currentPosition, currentPosition + attributeLength);
-                }
-                else
-                {
-                    attribute.Value = new Byte[attributeLength];
-                    Buffer.BlockCopy(bytes, currentPosition, attribute.Value, 0, attributeLength);
-                }
-                list.Add(attribute);
-
-                currentPosition += attributeLength;
-            }
-            return list;
-        }
-
+               
 
         /// <summary>
         /// Get the byte representation of the packet

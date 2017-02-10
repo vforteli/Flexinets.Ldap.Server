@@ -3,8 +3,7 @@ using System.Collections;
 
 namespace Flexinets.Ldap
 {
-
-    internal class Tag
+    public class Tag
     {
         private Byte _tagByte;
 

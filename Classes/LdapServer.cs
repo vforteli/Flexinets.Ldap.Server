@@ -79,7 +79,7 @@ namespace Flexinets.Ldap
 
                             _log.Debug($"Received {i} bytes: {Utils.ByteArrayToString(bytes)}");
 
-                            var requestPacket = LdapAttribute.ParsePacket(bytes);
+                            var requestPacket = LdapPacket.ParsePacket(bytes);
                             PrintValue(requestPacket);
 
                             if (requestPacket.ChildAttributes.Any(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest))
@@ -111,7 +111,7 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="searchRequest"></param>
         /// <returns></returns>
-        private Byte[] HandleSearchRequest(LdapAttribute requestPacket)
+        private Byte[] HandleSearchRequest(LdapPacket requestPacket)
         {
             var searchRequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest);
             var filter = searchRequest.ChildAttributes[6];
@@ -123,7 +123,7 @@ namespace Flexinets.Ldap
                 }
             }
 
-            var responsePacket = LdapAttribute.CreatePacket(Convert.ToInt32(requestPacket.ChildAttributes[0].GetValue()));
+            var responsePacket = new LdapPacket(requestPacket.MessageId);
             var response = new LdapAttribute(LdapOperation.SearchResultDone, true);
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (Byte)LdapResult.success } }); // success
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
@@ -137,7 +137,7 @@ namespace Flexinets.Ldap
         /// Handle bindrequests
         /// </summary>
         /// <param name="bindrequest"></param>
-        private Byte[] HandleBindRequest(LdapAttribute requestPacket)
+        private Byte[] HandleBindRequest(LdapPacket requestPacket)
         {
             var bindrequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest);
             var username = bindrequest.ChildAttributes[1].GetValue().ToString();
@@ -149,7 +149,7 @@ namespace Flexinets.Ldap
                 response = LdapResult.success;
             }
 
-            var responsePacket = LdapAttribute.CreatePacket(Convert.ToInt32(requestPacket.ChildAttributes[0].GetValue()));
+            var responsePacket = new LdapPacket(requestPacket.MessageId);
             var bindResponse = new LdapAttribute(LdapOperation.BindResponse, true);
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (Byte)response } }); // success
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
