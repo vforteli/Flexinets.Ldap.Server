@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 
 namespace Flexinets.Ldap
 {
@@ -80,21 +79,18 @@ namespace Flexinets.Ldap
 
                             _log.Debug($"Received {i} bytes: {Utils.ByteArrayToString(bytes)}");
 
-                            var ldapPacket = LdapAttribute.ParsePacket(bytes);
-                            PrintValue(ldapPacket);
+                            var requestPacket = LdapAttribute.ParsePacket(bytes);
+                            PrintValue(requestPacket);
 
-
-                            var bindrequest = ldapPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest);
-                            if (bindrequest != null)
+                            if (requestPacket.ChildAttributes.Any(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest))
                             {
-                                var responseBytes = HandleBindRequest(bindrequest);
+                                var responseBytes = HandleBindRequest(requestPacket);
                                 stream.Write(responseBytes, 0, responseBytes.Length);
                             }
 
-                            var searchRequest = ldapPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest);
-                            if (searchRequest != null)
+                            if (requestPacket.ChildAttributes.Any(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest))
                             {
-                                var response = HandleSearchRequest(searchRequest);
+                                var response = HandleSearchRequest(requestPacket);
                                 stream.Write(response, 0, response.Length);
                             }
                         }
@@ -115,8 +111,9 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="searchRequest"></param>
         /// <returns></returns>
-        private Byte[] HandleSearchRequest(LdapAttribute searchRequest)
+        private Byte[] HandleSearchRequest(LdapAttribute requestPacket)
         {
+            var searchRequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest);
             var filter = searchRequest.ChildAttributes[6];
             if (filter.ContextType == 3) // equalityMatch
             {
@@ -126,40 +123,39 @@ namespace Flexinets.Ldap
                 }
             }
 
-            var packet = LdapAttribute.CreatePacket(2); // todo sort out this message id...
+            var responsePacket = LdapAttribute.CreatePacket(Convert.ToInt32(requestPacket.ChildAttributes[0].GetValue()));
             var response = new LdapAttribute(LdapOperation.SearchResultDone, true);
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (Byte)LdapResult.success } }); // success
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
-            packet.ChildAttributes.Add(response);
-            return packet.GetBytes();
+            responsePacket.ChildAttributes.Add(response);
+            return responsePacket.GetBytes();
         }
 
 
         /// <summary>
         /// Handle bindrequests
         /// </summary>
-        /// <param name="stream"></param>
         /// <param name="bindrequest"></param>
-        private Byte[] HandleBindRequest(LdapAttribute bindrequest)
+        private Byte[] HandleBindRequest(LdapAttribute requestPacket)
         {
+            var bindrequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest);
             var username = bindrequest.ChildAttributes[1].GetValue().ToString();
             var password = bindrequest.ChildAttributes[2].GetValue().ToString();
 
             var response = LdapResult.invalidCredentials;
-
             if (username == "cn=bindUser,cn=Users,dc=dev,dc=company,dc=com" && password == "bindUserPassword")
             {
                 response = LdapResult.success;
             }
 
-            var packet = LdapAttribute.CreatePacket(1); // todo sort out this message id...
+            var responsePacket = LdapAttribute.CreatePacket(Convert.ToInt32(requestPacket.ChildAttributes[0].GetValue()));
             var bindResponse = new LdapAttribute(LdapOperation.BindResponse, true);
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (Byte)response } }); // success
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
-            packet.ChildAttributes.Add(bindResponse);
-            return packet.GetBytes();
+            responsePacket.ChildAttributes.Add(bindResponse);
+            return responsePacket.GetBytes();
         }
 
 
