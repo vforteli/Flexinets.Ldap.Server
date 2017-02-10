@@ -54,6 +54,7 @@
     <Compile Include="Classes\TagClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Classes\Tag.cs" />
+    <Compile Include="Tests\LdapPacketTests.cs" />
     <Compile Include="Tests\LdapAttributeTests.cs" />
     <Compile Include="Tests\BerLengthTests.cs" />
     <Compile Include="Tests\LdapTagTests.cs" />
