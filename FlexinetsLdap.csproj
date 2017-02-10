@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes\LdapAttribute.cs" />
+    <Compile Include="Classes\LdapFilterChoice.cs" />
     <Compile Include="Classes\LdapOperation.cs" />
     <Compile Include="Classes\LdapPacket.cs" />
     <Compile Include="Classes\LdapResult.cs" />

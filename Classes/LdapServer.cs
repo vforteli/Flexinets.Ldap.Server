@@ -67,11 +67,10 @@ namespace Flexinets.Ldap
                     {
                         var stream = client.GetStream();
 
-                        int i = 0;
                         while (true)
                         {
                             var bytes = new Byte[1024];
-                            i = stream.Read(bytes, 0, bytes.Length);
+                            Int32 i = stream.Read(bytes, 0, bytes.Length);
                             if (i == 0)
                             {
                                 break;
@@ -90,8 +89,7 @@ namespace Flexinets.Ldap
 
                             if (requestPacket.ChildAttributes.Any(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest))
                             {
-                                var response = HandleSearchRequest(requestPacket);
-                                stream.Write(response, 0, response.Length);
+                                HandleSearchRequest(stream, requestPacket);
                             }
                         }
 
@@ -100,6 +98,10 @@ namespace Flexinets.Ldap
                     catch (IOException ioex)
                     {
                         _log.Warn("oops", ioex);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error("Something went wrong", ex);
                     }
                 }
             }
@@ -111,25 +113,30 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="searchRequest"></param>
         /// <returns></returns>
-        private Byte[] HandleSearchRequest(LdapPacket requestPacket)
+        private void HandleSearchRequest(NetworkStream stream, LdapPacket requestPacket)
         {
             var searchRequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest);
             var filter = searchRequest.ChildAttributes[6];
-            if (filter.ContextType == 3) // equalityMatch
+
+            if (filter.ContextType == (Byte)LdapFilterChoice.equalityMatch && filter.ChildAttributes[0].GetValue<String>() == "sAMAccountName" && filter.ChildAttributes[1].GetValue<String>() == "testuser") // equalityMatch
             {
-                if ($"{filter.ChildAttributes[0].GetValue<String>()}={filter.ChildAttributes[1].GetValue<String>()}" == "sAMAccountName=testuser")
-                {
-                    _log.Debug($"filter: {filter.ChildAttributes[0].GetValue<String>()}={filter.ChildAttributes[1].GetValue<String>()}");
-                }
+                var responseEntryPacket = new LdapPacket(requestPacket.MessageId);
+                var searchResultEntry = new LdapAttribute(LdapOperation.SearchResultEntry, true);
+                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false, "cn=testuser,cn=Users,dc=dev,dc=company,dc=com"));
+                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Sequence, true));
+                responseEntryPacket.ChildAttributes.Add(searchResultEntry);
+                var responsEntryBytes = responseEntryPacket.GetBytes();
+                stream.Write(responsEntryBytes, 0, responsEntryBytes.Length);
             }
 
-            var responsePacket = new LdapPacket(requestPacket.MessageId);
+            var responseDonePacket = new LdapPacket(requestPacket.MessageId);
             var response = new LdapAttribute(LdapOperation.SearchResultDone, true);
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false, (Byte)LdapResult.success));
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
-            responsePacket.ChildAttributes.Add(response);
-            return responsePacket.GetBytes();
+            responseDonePacket.ChildAttributes.Add(response);
+            var responsDoneBytes = responseDonePacket.GetBytes();
+            stream.Write(responsDoneBytes, 0, responsDoneBytes.Length);
         }
 
 
@@ -144,14 +151,15 @@ namespace Flexinets.Ldap
             var password = bindrequest.ChildAttributes[2].GetValue<String>();
 
             var response = LdapResult.invalidCredentials;
-            if (username == "cn=bindUser,cn=Users,dc=dev,dc=company,dc=com" && password == "bindUserPassword")
+            if (username == "cn=bindUser,cn=Users,dc=dev,dc=company,dc=com" && password == "bindUserPassword"
+                || username == "cn=testuser,cn=Users,dc=dev,dc=company,dc=com" && password == "123")
             {
                 response = LdapResult.success;
             }
 
             var responsePacket = new LdapPacket(requestPacket.MessageId);
             var bindResponse = new LdapAttribute(LdapOperation.BindResponse, true);
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false, (Byte)response)); // success
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false, (Byte)response));
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
             responsePacket.ChildAttributes.Add(bindResponse);
