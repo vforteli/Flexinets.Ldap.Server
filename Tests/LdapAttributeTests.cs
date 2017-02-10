@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections;
-using System.Text;
 
 namespace Flexinets.Ldap.Tests
 {
@@ -11,11 +9,7 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytes()
         {
-            var attribute = new LdapAttribute(UniversalDataType.Integer, false)
-            {
-                Value = new byte[] { 1 }
-            };
-
+            var attribute = new LdapAttribute(UniversalDataType.Integer, false, (Byte)1);
             Assert.AreEqual("020101", Utils.ByteArrayToString(attribute.GetBytes()));
         }
 
@@ -23,23 +17,23 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytes2()
         {
-            var attribute = new LdapAttribute(UniversalDataType.Integer, false)
-            {
-                Value = new byte[] { 2 }
-            };
-
+            var attribute = new LdapAttribute(UniversalDataType.Integer, false, (Byte)2);
             Assert.AreEqual("020102", Utils.ByteArrayToString(attribute.GetBytes()));
+        }
+
+
+        [TestMethod]
+        public void TestLdapAttributeGetBytesMaxInt()
+        {
+            var attribute = new LdapAttribute(UniversalDataType.Integer, false, Int32.MaxValue);
+            Assert.AreEqual(Int32.MaxValue, attribute.GetValue<Int32>());
         }
 
 
         [TestMethod]
         public void TestLdapAttributeGetBytesBoolean()
         {
-            var attribute = new LdapAttribute(UniversalDataType.Boolean, false)
-            {
-                Value = new byte[] { 1 }
-            };
-
+            var attribute = new LdapAttribute(UniversalDataType.Boolean, false, true);
             Assert.AreEqual("010101", Utils.ByteArrayToString(attribute.GetBytes()));
         }
 
@@ -47,11 +41,7 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytesBoolean2()
         {
-            var attribute = new LdapAttribute(UniversalDataType.Boolean, false)
-            {
-                Value = new byte[] { 0 }
-            };
-
+            var attribute = new LdapAttribute(UniversalDataType.Boolean, false, false);
             Assert.AreEqual("010100", Utils.ByteArrayToString(attribute.GetBytes()));
         }
 
@@ -59,11 +49,7 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeGetBytesString()
         {
-            var attribute = new LdapAttribute(UniversalDataType.OctetString, false)
-            {
-                Value = Encoding.UTF8.GetBytes("dc=karakorum,dc=net")
-            };
-
+            var attribute = new LdapAttribute(UniversalDataType.OctetString, false, "dc=karakorum,dc=net");
             Assert.AreEqual("041364633d6b6172616b6f72756d2c64633d6e6574", Utils.ByteArrayToString(attribute.GetBytes()));
         }
 
@@ -71,30 +57,17 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeSequenceGetBytesString()
         {
-            var packet = new LdapAttribute(UniversalDataType.Sequence, true);
-            packet.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false)
-            {
-                Value = new Byte[] { 1 }
-            });
+            var packet = new LdapPacket(1);
 
             // Bind request
             var bindrequest = new LdapAttribute(LdapOperation.BindRequest, true);
-            bindrequest.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false)
-            {
-                Value = new Byte[] { 3 }    // version 3
-            });
-            bindrequest.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false)
-            {
-                Value = Encoding.UTF8.GetBytes("cn=bindUser,cn=Users,dc=dev,dc=company,dc=com")
-            });
-            bindrequest.ChildAttributes.Add(new LdapAttribute((byte)0, false)
-            {
-                Value = Encoding.UTF8.GetBytes("bindUserPassword")
-            });
+            bindrequest.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false, (Byte)3));
+            bindrequest.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false, "cn=bindUser,cn=Users,dc=dev,dc=company,dc=com"));
+            bindrequest.ChildAttributes.Add(new LdapAttribute((byte)0, false, "bindUserPassword")); 
 
             packet.ChildAttributes.Add(bindrequest);
 
-            var expected = "30490201016044020103042d636e3d62696e64557365722c636e3d55736572732c64633d6465762c64633d636f6d70616e792c64633d636f6d801062696e645573657250617373776f7264";
+            var expected = "304c0204000000016044020103042d636e3d62696e64557365722c636e3d55736572732c64633d6465762c64633d636f6d70616e792c64633d636f6d801062696e645573657250617373776f7264"; // "30490201016044020103042d636e3d62696e64557365722c636e3d55736572732c64633d6465762c64633d636f6d70616e792c64633d636f6d801062696e645573657250617373776f7264";
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
 
@@ -102,22 +75,12 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestLdapAttributeSequenceGetBytes2()
         {
-            // Packet
-            var packet = new LdapAttribute(UniversalDataType.Sequence, true);
-
-            // Message id
-            packet.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Integer, false)
-            {
-                Value = new Byte[] { 1 }
-            });
+            var packet = new LdapPacket(1);
 
             // Bind request
             var bindresponse = new LdapAttribute(LdapOperation.BindResponse, true);
 
-            var resultCode = new LdapAttribute(UniversalDataType.Enumerated, false)
-            {
-                Value = new Byte[] { (Byte)LdapResult.success }
-            };
+            var resultCode = new LdapAttribute(UniversalDataType.Enumerated, false, (Byte)LdapResult.success);  
             bindresponse.ChildAttributes.Add(resultCode);
 
             var matchedDn = new LdapAttribute(UniversalDataType.OctetString, false);
@@ -128,7 +91,7 @@ namespace Flexinets.Ldap.Tests
 
             packet.ChildAttributes.Add(bindresponse);
 
-            var expected = "300c02010161070a010004000400";
+            var expected = "300f02040000000161070a010004000400"; // "300c02010161070a010004000400";
             Assert.AreEqual(expected, Utils.ByteArrayToString(packet.GetBytes()));
         }
 
@@ -195,8 +158,8 @@ namespace Flexinets.Ldap.Tests
         [TestMethod]
         public void TestPacketMessageId()
         {
-            var packet = new LdapPacket(4);
-            Assert.AreEqual(4, packet.MessageId);
+            var packet = new LdapPacket(Int32.MaxValue);
+            Assert.AreEqual(Int32.MaxValue, packet.MessageId);
         }
     }
 }

@@ -8,7 +8,7 @@ namespace Flexinets.Ldap
     public class LdapAttribute
     {
         private Tag _tag;
-        public Byte[] Value = new byte[0];  // todo create typed setter
+        protected Byte[] Value = new Byte[0];
         public List<LdapAttribute> ChildAttributes = new List<LdapAttribute>();
 
         public TagClass Class
@@ -73,6 +73,18 @@ namespace Flexinets.Ldap
 
 
         /// <summary>
+        /// Create an application attribute
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="isConstructed"></param>
+        public LdapAttribute(LdapOperation operation, Boolean isConstructed, Object value)
+        {
+            _tag = new Tag(operation, isConstructed);
+            Value = GetBytes(value);
+        }
+
+
+        /// <summary>
         /// Create a universal attribute
         /// </summary>
         /// <param name="dataType"></param>
@@ -80,6 +92,18 @@ namespace Flexinets.Ldap
         public LdapAttribute(UniversalDataType dataType, Boolean isConstructed)
         {
             _tag = new Tag(dataType, isConstructed);
+        }
+
+
+        /// <summary>
+        /// Create a universal attribute
+        /// </summary>
+        /// <param name="dataType"></param>
+        /// <param name="isConstructed"></param>
+        public LdapAttribute(UniversalDataType dataType, Boolean isConstructed, Object value)
+        {
+            _tag = new Tag(dataType, isConstructed);
+            Value = GetBytes(value);
         }
 
 
@@ -95,6 +119,18 @@ namespace Flexinets.Ldap
 
 
         /// <summary>
+        /// Create a context attribute
+        /// </summary>
+        /// <param name="contextType"></param>
+        /// <param name="isConstructed"></param>
+        public LdapAttribute(Byte contextType, Boolean isConstructed, Object value)
+        {
+            _tag = new Tag(contextType, isConstructed);
+            Value = GetBytes(value);
+        }
+
+
+        /// <summary>
         /// Create an attribute with tag
         /// </summary>
         /// <param name="tag"></param>
@@ -102,7 +138,7 @@ namespace Flexinets.Ldap
         {
             _tag = tag;
         }
-               
+
 
         /// <summary>
         /// Get the byte representation of the packet
@@ -176,6 +212,32 @@ namespace Flexinets.Ldap
                 // todo add rest...
                 return Encoding.UTF8.GetString(Value, 0, Value.Length);
             }
+        }
+
+
+        private Byte[] GetBytes(Object value)
+        {
+            if (value.GetType() == typeof(String))
+            {
+                return Encoding.UTF8.GetBytes((String)value);
+            }
+            else if (value.GetType() == typeof(Int32))
+            {               
+                return BitConverter.GetBytes((Int32)value).Reverse().ToArray();
+            }
+            else if (value.GetType() == typeof(Boolean))
+            {
+                return BitConverter.GetBytes((Boolean)value);
+            }
+            else if (value.GetType() == typeof(Byte))
+            {
+                return new Byte[] { (Byte)value };
+            }
+            else if (value.GetType() == typeof(Byte[]))
+            {
+                return (Byte[])value;
+            }
+            throw new InvalidOperationException($"Nothing found for {value.GetType()}");
         }
     }
 }

@@ -125,7 +125,7 @@ namespace Flexinets.Ldap
 
             var responsePacket = new LdapPacket(requestPacket.MessageId);
             var response = new LdapAttribute(LdapOperation.SearchResultDone, true);
-            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (Byte)LdapResult.success } }); // success
+            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false, (Byte)LdapResult.success));
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
             responsePacket.ChildAttributes.Add(response);
@@ -151,7 +151,7 @@ namespace Flexinets.Ldap
 
             var responsePacket = new LdapPacket(requestPacket.MessageId);
             var bindResponse = new LdapAttribute(LdapOperation.BindResponse, true);
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false) { Value = new Byte[] { (Byte)response } }); // success
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false, (Byte)response)); // success
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
             bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
             responsePacket.ChildAttributes.Add(bindResponse);
