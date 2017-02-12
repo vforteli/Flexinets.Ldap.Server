@@ -24,7 +24,7 @@ namespace Flexinets.Ldap
             return bytes;
         }
 
-        public static String ByteArrayToString(byte[] bytes)
+        public static String ByteArrayToString(Byte[] bytes)
         {
             var hex = new StringBuilder(bytes.Length * 2);
             foreach (byte b in bytes)

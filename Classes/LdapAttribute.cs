@@ -24,7 +24,7 @@ namespace Flexinets.Ldap
             get { return _tag.IsConstructed; }
         }
 
-        public LdapOperation LdapOperation
+        public LdapOperation? LdapOperation
         {
             get
             {
@@ -32,11 +32,11 @@ namespace Flexinets.Ldap
                 {
                     return _tag.LdapOperation;
                 }
-                throw new InvalidOperationException("Wrong attribute class for this operation");
+                return null;
             }
         }
 
-        public UniversalDataType DataType
+        public UniversalDataType? DataType
         {
             get
             {
@@ -44,11 +44,11 @@ namespace Flexinets.Ldap
                 {
                     return _tag.DataType;
                 }
-                throw new InvalidOperationException("Wrong attribute class for this operation");
+                return null;
             }
         }
 
-        public Byte ContextType
+        public Byte? ContextType
         {
             get
             {
@@ -56,7 +56,7 @@ namespace Flexinets.Ldap
                 {
                     return _tag.ContextType;
                 }
-                throw new InvalidOperationException("Wrong attribute class for this operation");
+                return null;
             }
         }
 
@@ -215,6 +215,11 @@ namespace Flexinets.Ldap
         }
 
 
+        /// <summary>
+        /// Convert the value to its byte form
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         private Byte[] GetBytes(Object value)
         {
             if (value.GetType() == typeof(String))

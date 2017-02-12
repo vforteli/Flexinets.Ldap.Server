@@ -55,11 +55,10 @@ namespace Flexinets.Ldap.Tests
    
 
         [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void TestAttributeClass()
         {
             var attribute = new LdapAttribute(LdapOperation.BindRequest, true);
-            var foo = attribute.DataType;
+            Assert.IsNull(attribute.DataType);
         }
 
         [TestMethod]

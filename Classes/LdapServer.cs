@@ -81,13 +81,13 @@ namespace Flexinets.Ldap
                             var requestPacket = LdapPacket.ParsePacket(bytes);
                             PrintValue(requestPacket);
 
-                            if (requestPacket.ChildAttributes.Any(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest))
+                            if (requestPacket.ChildAttributes.Any(o => o.LdapOperation == LdapOperation.BindRequest))
                             {
                                 var responseBytes = HandleBindRequest(requestPacket);
                                 stream.Write(responseBytes, 0, responseBytes.Length);
                             }
 
-                            if (requestPacket.ChildAttributes.Any(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest))
+                            if (requestPacket.ChildAttributes.Any(o => o.LdapOperation == LdapOperation.SearchRequest))
                             {
                                 HandleSearchRequest(stream, requestPacket);
                             }
