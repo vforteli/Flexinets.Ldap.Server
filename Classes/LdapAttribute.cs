@@ -141,7 +141,7 @@ namespace Flexinets.Ldap
 
 
         /// <summary>
-        /// Get the byte representation of the packet
+        /// Get the byte representation of the attribute and its children
         /// </summary>
         /// <returns></returns>
         public Byte[] GetBytes()
