@@ -77,6 +77,7 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="operation"></param>
         /// <param name="isConstructed"></param>
+        /// <param name="value"></param>
         public LdapAttribute(LdapOperation operation, Boolean isConstructed, Object value)
         {
             _tag = new Tag(operation, isConstructed);
@@ -100,6 +101,7 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="dataType"></param>
         /// <param name="isConstructed"></param>
+        /// <param name="value"></param>
         public LdapAttribute(UniversalDataType dataType, Boolean isConstructed, Object value)
         {
             _tag = new Tag(dataType, isConstructed);
@@ -123,6 +125,7 @@ namespace Flexinets.Ldap
         /// </summary>
         /// <param name="contextType"></param>
         /// <param name="isConstructed"></param>
+        /// <param name="value"></param>
         public LdapAttribute(Byte contextType, Boolean isConstructed, Object value)
         {
             _tag = new Tag(contextType, isConstructed);
@@ -146,30 +149,22 @@ namespace Flexinets.Ldap
         /// <returns></returns>
         public Byte[] GetBytes()
         {
+            var list = new List<Byte>();
             if (_tag.IsConstructed)
             {
-                var list = new List<Byte>();
-                foreach (var attribute in ChildAttributes)
-                {
-                    list.AddRange(attribute.GetBytes().ToList());
-                }
-
-                var lengthbytes = Utils.IntToBerLength(list.Count);
-                var attributeBytes = new byte[1 + lengthbytes.Length + list.Count];
-                attributeBytes[0] = _tag.GetTagByte();
-                Buffer.BlockCopy(lengthbytes, 0, attributeBytes, 1, lengthbytes.Length);
-                Buffer.BlockCopy(list.ToArray(), 0, attributeBytes, 1 + lengthbytes.Length, list.Count);
-                return attributeBytes;
+                ChildAttributes.ForEach(o => list.AddRange(o.GetBytes()));
             }
             else
             {
-                var lengthbytes = Utils.IntToBerLength(Value.Length);
-                var attributeBytes = new byte[1 + lengthbytes.Length + Value.Length];
-                attributeBytes[0] = _tag.GetTagByte();
-                Buffer.BlockCopy(lengthbytes, 0, attributeBytes, 1, lengthbytes.Length);
-                Buffer.BlockCopy(Value, 0, attributeBytes, 1 + lengthbytes.Length, Value.Length);
-                return attributeBytes;
+                list.AddRange(Value);
             }
+
+            var lengthBytes = Utils.IntToBerLength(list.Count);
+            var attributeBytes = new byte[1 + lengthBytes.Length + list.Count];
+            attributeBytes[0] = _tag.GetTagByte();
+            Buffer.BlockCopy(lengthBytes, 0, attributeBytes, 1, lengthBytes.Length);
+            Buffer.BlockCopy(list.ToArray(), 0, attributeBytes, 1 + lengthBytes.Length, list.Count);
+            return attributeBytes;
         }
 
 
@@ -227,7 +222,7 @@ namespace Flexinets.Ldap
                 return Encoding.UTF8.GetBytes((String)value);
             }
             else if (value.GetType() == typeof(Int32))
-            {               
+            {
                 return BitConverter.GetBytes((Int32)value).Reverse().ToArray();
             }
             else if (value.GetType() == typeof(Boolean))

@@ -22,10 +22,10 @@ namespace Flexinets.Ldap
         /// <summary>
         /// Create a new server on endpoint
         /// </summary>
-        /// <param name="serverEndpoint"></param>
-        public LdapServer(IPEndPoint serverEndpoint)
+        /// <param name="localEndpoint"></param>
+        public LdapServer(IPEndPoint localEndpoint)
         {
-            _server = new TcpListener(serverEndpoint);
+            _server = new TcpListener(localEndpoint);
         }
 
 
