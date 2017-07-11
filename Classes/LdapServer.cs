@@ -70,7 +70,7 @@ namespace Flexinets.Ldap
                         while (true)
                         {
                             var bytes = new Byte[1024];
-                            Int32 i = stream.Read(bytes, 0, bytes.Length);
+                            var i = stream.Read(bytes, 0, bytes.Length);
                             if (i == 0)
                             {
                                 break;
