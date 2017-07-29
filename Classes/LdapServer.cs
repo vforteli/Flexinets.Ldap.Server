@@ -1,4 +1,5 @@
-﻿using log4net;
+﻿using Flexinets.Ldap.Core;
+using log4net;
 using System;
 using System.IO;
 using System.Linq;
