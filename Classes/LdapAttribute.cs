@@ -149,21 +149,21 @@ namespace Flexinets.Ldap
         /// <returns></returns>
         public Byte[] GetBytes()
         {
-            var value = new List<Byte>();
+            var list = new List<Byte>();
             if (_tag.IsConstructed)
             {
-                ChildAttributes.ForEach(o => value.AddRange(o.GetBytes()));
+                ChildAttributes.ForEach(o => list.AddRange(o.GetBytes()));
             }
             else
             {
-                value.AddRange(Value);
+                list.AddRange(Value);
             }
 
-            var lengthBytes = Utils.IntToBerLength(value.Count);
-            var attributeBytes = new Byte[1 + lengthBytes.Length + value.Count];
+            var lengthBytes = Utils.IntToBerLength(list.Count);
+            var attributeBytes = new byte[1 + lengthBytes.Length + list.Count];
             attributeBytes[0] = _tag.GetTagByte();
             Buffer.BlockCopy(lengthBytes, 0, attributeBytes, 1, lengthBytes.Length);
-            Buffer.BlockCopy(value.ToArray(), 0, attributeBytes, 1 + lengthBytes.Length, value.Count);
+            Buffer.BlockCopy(list.ToArray(), 0, attributeBytes, 1 + lengthBytes.Length, list.Count);
             return attributeBytes;
         }
 
