@@ -13,12 +13,6 @@ namespace Flexinets.Ldap
         private readonly ILog _log = LogManager.GetLogger(typeof(LdapServer));
         private readonly TcpListener _server;
 
-        public Boolean Running
-        {
-            get;
-            private set;
-        }
-
 
         /// <summary>
         /// Create a new server on endpoint
@@ -37,7 +31,6 @@ namespace Flexinets.Ldap
         {
             _server.Start();
             _server.BeginAcceptTcpClient(ReceiveCallback, null);
-            Running = true;
         }
 
 
@@ -46,8 +39,7 @@ namespace Flexinets.Ldap
         /// </summary>
         public void Stop()
         {
-            _server.Stop();
-            Running = false;
+            _server?.Stop();
         }
 
 
@@ -57,7 +49,7 @@ namespace Flexinets.Ldap
         /// <param name="ar"></param>
         private void ReceiveCallback(IAsyncResult ar)
         {
-            if (Running)
+            if (_server.Server.IsBound)
             {
                 using (var client = _server.EndAcceptTcpClient(ar))
                 {
@@ -68,18 +60,8 @@ namespace Flexinets.Ldap
                     {
                         var stream = client.GetStream();
 
-                        while (true)
+                        while (LdapPacket.TryParsePacket(stream, out var requestPacket))
                         {
-                            var bytes = new Byte[1024];
-                            var i = stream.Read(bytes, 0, bytes.Length);
-                            if (i == 0)
-                            {
-                                break;
-                            }
-
-                            _log.Debug($"Received {i} bytes: {Utils.ByteArrayToString(bytes)}");
-
-                            var requestPacket = LdapPacket.ParsePacket(bytes);
                             PrintValue(requestPacket);
 
                             if (requestPacket.ChildAttributes.Any(o => o.LdapOperation == LdapOperation.BindRequest))
