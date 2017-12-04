@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Flexinets.Ldap.Core" Version="1.0.2" />
+    <PackageReference Include="Flexinets.Ldap.Core" Version="1.0.4" />
     <PackageReference Include="log4net" Version="2.0.8" />
   </ItemGroup>
 

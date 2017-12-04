@@ -124,8 +124,8 @@ namespace Flexinets.Ldap
             {
                 var responseEntryPacket = new LdapPacket(requestPacket.MessageId);
                 var searchResultEntry = new LdapAttribute(LdapOperation.SearchResultEntry, true);
-                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false, "cn=testuser,cn=Users,dc=dev,dc=company,dc=com"));
-                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Sequence, true));
+                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "cn=testuser,cn=Users,dc=dev,dc=company,dc=com"));
+                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Sequence));
                 responseEntryPacket.ChildAttributes.Add(searchResultEntry);
                 var responsEntryBytes = responseEntryPacket.GetBytes();
                 stream.Write(responsEntryBytes, 0, responsEntryBytes.Length);
@@ -133,9 +133,9 @@ namespace Flexinets.Ldap
 
             var responseDonePacket = new LdapPacket(requestPacket.MessageId);
             var response = new LdapAttribute(LdapOperation.SearchResultDone, true);
-            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false, (Byte)LdapResult.success));
-            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
-            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
+            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, (Byte)LdapResult.success));
+            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // matchedDN
+            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // diagnosticMessage
             responseDonePacket.ChildAttributes.Add(response);
             var responseDoneBytes = responseDonePacket.GetBytes();
             stream.Write(responseDoneBytes, 0, responseDoneBytes.Length);
@@ -161,9 +161,9 @@ namespace Flexinets.Ldap
 
             var responsePacket = new LdapPacket(requestPacket.MessageId);
             var bindResponse = new LdapAttribute(LdapOperation.BindResponse, true);
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, false, (Byte)response));
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // matchedDN
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, false));  // diagnosticMessage
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, (Byte)response));
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // matchedDN
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // diagnosticMessage
             responsePacket.ChildAttributes.Add(bindResponse);
             var responseBytes = responsePacket.GetBytes();
             stream.Write(responseBytes, 0, responseBytes.Length);
