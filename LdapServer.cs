@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Flexinets.Ldap
@@ -80,7 +81,7 @@ namespace Flexinets.Ldap
 
                 while (LdapPacket.TryParsePacket(stream, out var requestPacket))
                 {
-                    PrintValue(requestPacket);
+                    LogPacket(requestPacket);
 
                     if (requestPacket.ChildAttributes.Any(o => o.LdapOperation == LdapOperation.BindRequest))
                     {
@@ -116,7 +117,7 @@ namespace Flexinets.Ldap
         /// <returns></returns>
         private void HandleSearchRequest(NetworkStream stream, LdapPacket requestPacket)
         {
-            var searchRequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.SearchRequest);
+            var searchRequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.LdapOperation == LdapOperation.SearchRequest);
             var filter = searchRequest.ChildAttributes[6];
 
             if ((LdapFilterChoice)filter.ContextType == LdapFilterChoice.equalityMatch && filter.ChildAttributes[0].GetValue<String>() == "sAMAccountName" && filter.ChildAttributes[1].GetValue<String>() == "testuser") // equalityMatch
@@ -147,7 +148,7 @@ namespace Flexinets.Ldap
         /// <param name="bindrequest"></param>
         private Boolean HandleBindRequest(Stream stream, LdapPacket requestPacket)
         {
-            var bindrequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.Class == TagClass.Application && o.LdapOperation == LdapOperation.BindRequest);
+            var bindrequest = requestPacket.ChildAttributes.SingleOrDefault(o => o.LdapOperation == LdapOperation.BindRequest);
             var username = bindrequest.ChildAttributes[1].GetValue<String>();
             var password = bindrequest.ChildAttributes[2].GetValue<String>();
 
@@ -174,21 +175,28 @@ namespace Flexinets.Ldap
         /// Dump the packet to log
         /// </summary>
         /// <param name="attribute"></param>
-        private void PrintValue(LdapAttribute attribute, Int32 depth = 1)
+        private void LogPacket(LdapAttribute attribute)
+        {
+            var sb = new StringBuilder();
+            RecurseAttributes(sb, attribute, 1);
+            _log.Debug($"Packet dump\n{sb}");
+
+        }
+        private void RecurseAttributes(StringBuilder sb, LdapAttribute attribute, Int32 depth)
         {
             if (attribute != null)
             {
                 if (attribute.Class == TagClass.Universal)
                 {
-                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Class} tag, DataType: {attribute.DataType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                    sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.DataType} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
                 }
                 else if (attribute.Class == TagClass.Application)
                 {
-                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Class} tag, LdapOperation: {attribute.LdapOperation} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                    sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.LdapOperation} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
                 }
                 else if (attribute.Class == TagClass.Context)
                 {
-                    _log.Debug($"{Utils.Repeat(">", depth)} {attribute.Class} tag, Context: {attribute.ContextType} Value type: {attribute.GetValue().GetType()} {attribute.GetValue()}");
+                    sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.ContextType} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
                 }
 
                 if (attribute.IsConstructed)
@@ -196,7 +204,7 @@ namespace Flexinets.Ldap
                     foreach (var attr in attribute.ChildAttributes)
                     {
                         depth++;
-                        PrintValue(attr, depth);
+                        RecurseAttributes(sb, attr, depth);
                         depth--;
                     }
                 }
