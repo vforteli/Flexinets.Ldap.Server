@@ -132,11 +132,7 @@ namespace Flexinets.Ldap
             }
 
             var responseDonePacket = new LdapPacket(requestPacket.MessageId);
-            var response = new LdapAttribute(LdapOperation.SearchResultDone);
-            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, (Byte)LdapResult.success));
-            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // matchedDN
-            response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // diagnosticMessage
-            responseDonePacket.ChildAttributes.Add(response);
+            responseDonePacket.ChildAttributes.Add(new LdapResultAttribute(LdapOperation.SearchResultDone, LdapResult.success));
             var responseDoneBytes = responseDonePacket.GetBytes();
             stream.Write(responseDoneBytes, 0, responseDoneBytes.Length);
         }
@@ -160,28 +156,11 @@ namespace Flexinets.Ldap
             }
 
             var responsePacket = new LdapPacket(requestPacket.MessageId);
-            responsePacket.ChildAttributes.Add(CreateBindResponseAttribute(response));
+            responsePacket.ChildAttributes.Add(new LdapResultAttribute(LdapOperation.BindResponse, response));
             var responseBytes = responsePacket.GetBytes();
             stream.Write(responseBytes, 0, responseBytes.Length);
             return response == LdapResult.success;
         }
-
-
-        /// <summary>
-        /// Create a bindresponse attribute
-        /// </summary>
-        /// <param name="response"></param>
-        /// <returns></returns>
-        private static LdapAttribute CreateBindResponseAttribute(LdapResult response)
-        {
-            // todo refactor into core or extensions?
-            var bindResponse = new LdapAttribute(LdapOperation.BindResponse);
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, (Byte)response));
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // matchedDN
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // diagnosticMessage
-            return bindResponse;
-        }
-
 
 
         /// <summary>
