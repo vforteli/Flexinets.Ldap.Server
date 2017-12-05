@@ -123,7 +123,7 @@ namespace Flexinets.Ldap
             if ((LdapFilterChoice)filter.ContextType == LdapFilterChoice.equalityMatch && filter.ChildAttributes[0].GetValue<String>() == "sAMAccountName" && filter.ChildAttributes[1].GetValue<String>() == "testuser") // equalityMatch
             {
                 var responseEntryPacket = new LdapPacket(requestPacket.MessageId);
-                var searchResultEntry = new LdapAttribute(LdapOperation.SearchResultEntry, true);
+                var searchResultEntry = new LdapAttribute(LdapOperation.SearchResultEntry);
                 searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "cn=testuser,cn=Users,dc=dev,dc=company,dc=com"));
                 searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Sequence));
                 responseEntryPacket.ChildAttributes.Add(searchResultEntry);
@@ -132,7 +132,7 @@ namespace Flexinets.Ldap
             }
 
             var responseDonePacket = new LdapPacket(requestPacket.MessageId);
-            var response = new LdapAttribute(LdapOperation.SearchResultDone, true);
+            var response = new LdapAttribute(LdapOperation.SearchResultDone);
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, (Byte)LdapResult.success));
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // matchedDN
             response.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // diagnosticMessage
@@ -160,15 +160,28 @@ namespace Flexinets.Ldap
             }
 
             var responsePacket = new LdapPacket(requestPacket.MessageId);
-            var bindResponse = new LdapAttribute(LdapOperation.BindResponse, true);
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, (Byte)response));
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // matchedDN
-            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // diagnosticMessage
-            responsePacket.ChildAttributes.Add(bindResponse);
+            responsePacket.ChildAttributes.Add(CreateBindResponseAttribute(response));
             var responseBytes = responsePacket.GetBytes();
             stream.Write(responseBytes, 0, responseBytes.Length);
             return response == LdapResult.success;
         }
+
+
+        /// <summary>
+        /// Create a bindresponse attribute
+        /// </summary>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        private static LdapAttribute CreateBindResponseAttribute(LdapResult response)
+        {
+            // todo refactor into core or extensions?
+            var bindResponse = new LdapAttribute(LdapOperation.BindResponse);
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Enumerated, (Byte)response));
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // matchedDN
+            bindResponse.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString));  // diagnosticMessage
+            return bindResponse;
+        }
+
 
 
         /// <summary>
@@ -186,18 +199,7 @@ namespace Flexinets.Ldap
         {
             if (attribute != null)
             {
-                if (attribute.Class == TagClass.Universal)
-                {
-                    sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.DataType} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
-                }
-                else if (attribute.Class == TagClass.Application)
-                {
-                    sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.LdapOperation} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
-                }
-                else if (attribute.Class == TagClass.Context)
-                {
-                    sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.ContextType} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
-                }
+                sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.DataType}{attribute.LdapOperation}{attribute.ContextType} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
 
                 if (attribute.IsConstructed)
                 {
