@@ -1,4 +1,4 @@
-Semi working LDAP server with pluggable backend.  
+Semi working LDAP server for .NET Standard with pluggable backend.  
 No intentions of supporting the whole RFC, just needed features like search and authentication.  
 Ldap packet parser and assembler.  
   
