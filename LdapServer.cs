@@ -1,4 +1,4 @@
-﻿using Flexinets.Ldap.Core;
+using Flexinets.Ldap.Core;
 using log4net;
 using System;
 using System.IO;
@@ -170,24 +170,18 @@ namespace Flexinets.Ldap
         private void LogPacket(LdapAttribute attribute)
         {
             var sb = new StringBuilder();
-            RecurseAttributes(sb, attribute, 1);
+            RecurseAttributes(sb, attribute);
             _log.Debug($"Packet dump\n{sb}");
-
         }
-        private void RecurseAttributes(StringBuilder sb, LdapAttribute attribute, Int32 depth)
+
+        private void RecurseAttributes(StringBuilder sb, LdapAttribute attribute, Int32 depth = 1)
         {
             if (attribute != null)
             {
                 sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.DataType}{attribute.LdapOperation}{attribute.ContextType} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
-
                 if (attribute.IsConstructed)
                 {
-                    foreach (var attr in attribute.ChildAttributes)
-                    {
-                        depth++;
-                        RecurseAttributes(sb, attr, depth);
-                        depth--;
-                    }
+                    attribute.ChildAttributes.ForEach(o => RecurseAttributes(sb, o, depth + 1) );                   
                 }
             }
         }
