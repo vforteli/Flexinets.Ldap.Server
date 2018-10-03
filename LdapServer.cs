@@ -1,4 +1,4 @@
-using Flexinets.Ldap.Core;
+﻿using Flexinets.Ldap.Core;
 using log4net;
 using System;
 using System.IO;
@@ -82,6 +82,7 @@ namespace Flexinets.Ldap
                 while (LdapPacket.TryParsePacket(stream, out var requestPacket))
                 {
                     LogPacket(requestPacket);
+                    _log.Debug(Utils.ByteArrayToString(requestPacket.GetBytes()));
 
                     if (requestPacket.ChildAttributes.Any(o => o.LdapOperation == LdapOperation.BindRequest))
                     {
@@ -103,10 +104,7 @@ namespace Flexinets.Ldap
             {
                 _log.Warn("oops", ioex);
             }
-            catch (Exception ex)
-            {
-                _log.Error("Something went wrong", ex);
-            }
+            
         }
 
 
@@ -124,8 +122,33 @@ namespace Flexinets.Ldap
             {
                 var responseEntryPacket = new LdapPacket(requestPacket.MessageId);
                 var searchResultEntry = new LdapAttribute(LdapOperation.SearchResultEntry);
-                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "cn=testuser,cn=Users,dc=dev,dc=company,dc=com"));
-                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.Sequence));
+                searchResultEntry.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "cn=bindUser,cn=Users,dc=dev,dc=company,dc=com"));   //  objectName
+
+                var partialAttributeList = new LdapAttribute(UniversalDataType.Sequence);
+
+
+                var givenNameAttribute = new LdapAttribute(UniversalDataType.Sequence);
+                givenNameAttribute.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "givenName"));
+                givenNameAttribute.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "osefsjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjfskejfkjejkjlkjlkjlkjlkjlkjflsjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjkejflswfwefwefwefkejfslekjfslkejfslekjfsefsfsefeslekfjslekfjslekfjslekjffskje"));
+                partialAttributeList.ChildAttributes.Add(givenNameAttribute);
+
+                var partialAttributeUid = new LdapAttribute(UniversalDataType.Sequence);
+                partialAttributeUid.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "uid"));   // type
+                var partialAttributeUidValues = new LdapAttribute(UniversalDataType.Set);
+                partialAttributeUidValues.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "useruidgoeshere"));
+                partialAttributeUid.ChildAttributes.Add(partialAttributeUidValues);
+                partialAttributeList.ChildAttributes.Add(partialAttributeUid);
+
+                var partialAttributeObjectClass = new LdapAttribute(UniversalDataType.Sequence);
+                partialAttributeObjectClass.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "objectClass"));   // type
+                var partialAttributeObjectClassValues = new LdapAttribute(UniversalDataType.Set);
+                partialAttributeObjectClassValues.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "posixAccount"));
+                partialAttributeObjectClassValues.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "shadowAccount"));
+                partialAttributeObjectClassValues.ChildAttributes.Add(new LdapAttribute(UniversalDataType.OctetString, "inetOrgPerson"));
+                partialAttributeObjectClass.ChildAttributes.Add(partialAttributeObjectClassValues);
+                partialAttributeList.ChildAttributes.Add(partialAttributeObjectClass);
+
+                searchResultEntry.ChildAttributes.Add(partialAttributeList);
                 responseEntryPacket.ChildAttributes.Add(searchResultEntry);
                 var responsEntryBytes = responseEntryPacket.GetBytes();
                 stream.Write(responsEntryBytes, 0, responsEntryBytes.Length);
@@ -154,10 +177,15 @@ namespace Flexinets.Ldap
             {
                 response = LdapResult.success;
             }
+            
 
             var responsePacket = new LdapPacket(requestPacket.MessageId);
             responsePacket.ChildAttributes.Add(new LdapResultAttribute(LdapOperation.BindResponse, response));
             var responseBytes = responsePacket.GetBytes();
+            _log.Debug("response");
+            var sb = new StringBuilder();
+            RecurseAttributes(sb, responsePacket);
+            _log.Debug(sb);
             stream.Write(responseBytes, 0, responseBytes.Length);
             return response == LdapResult.success;
         }
@@ -181,7 +209,7 @@ namespace Flexinets.Ldap
                 sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.DataType}{attribute.LdapOperation}{attribute.ContextType} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
                 if (attribute.IsConstructed)
                 {
-                    attribute.ChildAttributes.ForEach(o => RecurseAttributes(sb, o, depth + 1) );                   
+                    attribute.ChildAttributes.ForEach(o => RecurseAttributes(sb, o, depth + 1));
                 }
             }
         }
