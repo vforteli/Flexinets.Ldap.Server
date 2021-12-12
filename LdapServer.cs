@@ -1,5 +1,5 @@
 using Flexinets.Ldap.Core;
-using log4net;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Linq;
@@ -12,17 +12,18 @@ namespace Flexinets.Ldap
 {
     public class LdapServer
     {
-        private readonly ILog _log = LogManager.GetLogger(typeof(LdapServer));
         private readonly TcpListener _server;
+        private readonly ILogger<LdapServer> _logger;
 
 
         /// <summary>
         /// Create a new server on endpoint
         /// </summary>
         /// <param name="localEndpoint"></param>
-        public LdapServer(IPEndPoint localEndpoint)
+        public LdapServer(IPEndPoint localEndpoint, ILogger<LdapServer> logger)
         {
             _server = new TcpListener(localEndpoint);
+            _logger = logger;
         }
 
 
@@ -61,7 +62,7 @@ namespace Flexinets.Ldap
                 catch (ObjectDisposedException) { } // Thrown when server is stopped while still receiving. This can be safely ignored
                 catch (Exception ex)
                 {
-                    _log.Fatal("Something went wrong accepting client", ex);
+                    _logger.LogCritical("Something went wrong accepting client", ex);
                 }
             }
         }
@@ -74,7 +75,7 @@ namespace Flexinets.Ldap
         {
             try
             {
-                _log.Debug($"Connection from {client.Client.RemoteEndPoint}");
+                _logger.LogCritical($"Connection from {client.Client.RemoteEndPoint}");
 
                 var isBound = false;
                 var stream = client.GetStream();
@@ -97,15 +98,15 @@ namespace Flexinets.Ldap
                     }
                 }
 
-                _log.Debug($"Connection closed to {client.Client.RemoteEndPoint}");
+                _logger.LogDebug($"Connection closed to {client.Client.RemoteEndPoint}");
             }
             catch (IOException ioex)
             {
-                _log.Warn("oops", ioex);
+                _logger.LogWarning("oops", ioex);
             }
             catch (Exception ex)
             {
-                _log.Error("Something went wrong", ex);
+                _logger.LogError("Something went wrong", ex);
             }
         }
 
@@ -171,7 +172,7 @@ namespace Flexinets.Ldap
         {
             var sb = new StringBuilder();
             RecurseAttributes(sb, attribute);
-            _log.Debug($"Packet dump\n{sb}");
+            _logger.LogDebug($"Packet dump\n{sb}");
         }
 
         private void RecurseAttributes(StringBuilder sb, LdapAttribute attribute, Int32 depth = 1)
@@ -181,7 +182,7 @@ namespace Flexinets.Ldap
                 sb.AppendLine($"{Utils.Repeat(">", depth)} {attribute.Class}:{attribute.DataType}{attribute.LdapOperation}{attribute.ContextType} - Type: {attribute.GetValue().GetType()} - {attribute.GetValue()}");
                 if (attribute.IsConstructed)
                 {
-                    attribute.ChildAttributes.ForEach(o => RecurseAttributes(sb, o, depth + 1) );                   
+                    attribute.ChildAttributes.ForEach(o => RecurseAttributes(sb, o, depth + 1));
                 }
             }
         }
